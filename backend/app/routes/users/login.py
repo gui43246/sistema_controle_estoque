@@ -29,7 +29,7 @@ def login():
         or not drt.strip()
         or not senha_digitada
     ):
-        return jsonify({"mensagem": "DRT e senha devem ser textos válidos"}), 400
+        return jsonify({"mensagem": "DRT e senha devem ser textos validos"}), 400
 
     with get_db() as conn:
         try:

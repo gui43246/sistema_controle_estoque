@@ -5,7 +5,7 @@ import re
 def validar_senha(senha=str)->tuple[bool,str]:
     """Retorna se a senha atende aos requisitos e a mensagem correspondente."""
     if not isinstance(senha, str):
-        return False, "senha inválida"
+        return False, "senha invalida"
 
     if len(senha) <8:
         return False ,"senha curta"

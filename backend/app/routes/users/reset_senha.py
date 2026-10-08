@@ -49,7 +49,7 @@ def resetar_senha():
             )
 
             if cursor.rowcount == 0:
-                return jsonify({"mensagem": "Usuário não encontrado"}), 404
+                return jsonify({"mensagem": "Usuario nao encontrado"}), 404
 
         return jsonify({"mensagem": "Senha alterada com sucesso"}), 200
 

@@ -21,7 +21,7 @@ def cadastrar_produto():
         cursor = conn.cursor()
         dados = request.get_json(silent=True)
         if not isinstance(dados, dict):
-            return jsonify({"mensagem": "envie um objeto JSON válido"}), 400
+            return jsonify({"mensagem": "envie um objeto JSON valido"}), 400
 
         campos_obrigatorios = ["codigo_barras","nome_produto","valor_prod","setor_id"]
         faltando = [campo for campo in campos_obrigatorios if not campo in dados]
@@ -29,29 +29,29 @@ def cadastrar_produto():
             return jsonify({"mensagem": f"faltando o campo {','.join(faltando)}"}),400
         
         if not isinstance(dados["codigo_barras"], str) or not dados["codigo_barras"].strip():
-            return jsonify({"mensagem": "código de barras inválido"}), 422
+            return jsonify({"mensagem": "codigo de barras invalido"}), 422
         if not isinstance(dados["nome_produto"], str) or not dados["nome_produto"].strip():
-            return jsonify({"mensagem": "nome do produto inválido"}), 422
+            return jsonify({"mensagem": "nome do produto invalido"}), 422
         if isinstance(dados["valor_prod"], bool) or isinstance(dados["setor_id"], bool):
-            return jsonify({"mensagem": "Campo inválido: valor_prod ou setor_id"}), 422
+            return jsonify({"mensagem": "Campo invalido: valor_prod ou setor_id"}), 422
 
         try:
             dados["valor_prod"] = float(dados["valor_prod"])
             dados["setor_id"] = int(dados["setor_id"])
         except (ValueError, TypeError, OverflowError):
-            return jsonify({"mensagem": "Campo inválido: valor_prod ou setor_id"}), 422
+            return jsonify({"mensagem": "Campo invalido: valor_prod ou setor_id"}), 422
 
         if dados["setor_id"] < 1 or dados["setor_id"] > 9_223_372_036_854_775_807:
-            return jsonify({"mensagem": "setor_id inválido"}), 422
+            return jsonify({"mensagem": "setor_id invalido"}), 422
         if not math.isfinite(dados["valor_prod"]) or dados["valor_prod"] < 0:
-            return jsonify({"mensagem": "valor do produto inválido"}), 422
+            return jsonify({"mensagem": "valor do produto invalido"}), 422
 
         setor_existe = cursor.execute(
             "SELECT 1 FROM setor WHERE id = ?",
             (dados["setor_id"],),
         ).fetchone()
         if setor_existe is None:
-            return jsonify({"mensagem": "setor não encontrado"}), 404
+            return jsonify({"mensagem": "setor nao encontrado"}), 404
         
         produto_existe = buscar(dados["codigo_barras"], config="status")
         if produto_existe is None:
@@ -83,7 +83,7 @@ def cadastrar_produto():
             
             return jsonify({"mensagem": "Sucesso ao cadastrar item"}), 201
         else:
-            return jsonify({"mensagem":"produto já cadastrado com esse código de barras"}),409
+            return jsonify({"mensagem":"produto ja cadastrado com esse codigo de barras"}),409
             
     except sqlite3.Error as e:
         return jsonify({"mensagem": f"Erro inespeado tenta novamente mais tarde: {str(e)}"}), 500

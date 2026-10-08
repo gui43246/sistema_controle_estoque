@@ -24,7 +24,7 @@ def admin_required(view_function):
             ).fetchone()
 
         if usuario is None:
-            return jsonify({"mensagem": "usuário do token não existe"}), 401
+            return jsonify({"mensagem": "usuario do token nao existe"}), 401
         tipo_usuario = (usuario["tipo_user"] or "").strip().lower()
         if tipo_usuario not in {"adm", "admin", "user_adm", "user_admin"}:
             return (

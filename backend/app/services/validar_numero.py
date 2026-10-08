@@ -46,7 +46,12 @@ def validar_telefone(numero: str, default_region: str = "BR") -> bool:
     apenas_digitos = re.sub(r"\D", "", numero)
 
     try:
-        if apenas_digitos.startswith(("55", "1", "44")):
+        # Números brasileiros locais com DDD têm 10 ou 11 dígitos e podem
+        # começar por "1" (por exemplo, DDD 11). Não os confunda com +1.
+        numero_local_br = default_region == "BR" and len(apenas_digitos) in (10, 11)
+        if apenas_digitos.startswith("55") or (
+            not numero_local_br and apenas_digitos.startswith(("1", "44"))
+        ):
             telefone = phonenumbers.parse("+" + apenas_digitos, None)
         else:
             telefone = phonenumbers.parse(apenas_digitos, default_region)

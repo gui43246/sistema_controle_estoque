@@ -64,6 +64,6 @@ def cadastrar_usuario():
             conn.commit()
             return jsonify({"mensagem": "ok usuario cadastrado"}), 201
         except sqlite3.IntegrityError:
-            return jsonify({"mensagem": "DRT ou email já cadastrados"}), 409
+            return jsonify({"mensagem": "DRT ou email ja cadastrados"}), 409
         except sqlite3.Error:
             return jsonify({"mensagem": "erro interno, tente mais tarde"}), 500

@@ -1,7 +1,20 @@
 @baseUrl = http://127.0.0.1:5000
-@adminToken = cole_o_token_de_administrador
-@drtUsuario = 123456789
 
-### Excluir usuário sem movimentações
+### Login administrador
+# @name login
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "drt": "900000000",
+  "senha_digitada": "Admteste123"
+}
+
+### Token obtido automaticamente
+@token = {{login.response.body.token}}
+@drtUsuario = 908765432
+
+### Excluir somente usuário de teste sem movimentações (esperado: 200)
+# Execute apenas se esta DRT foi cadastrada por você para teste.
 DELETE {{baseUrl}}/usuarios/{{drtUsuario}}
-Authorization: Bearer {{adminToken}}
+Authorization: Bearer {{token}}

@@ -27,4 +27,4 @@ def listar_usuarios():
 
         return jsonify([dict(usuario) for usuario in usuarios]), 200
     except sqlite3.Error:
-        return jsonify({"mensagem": "erro ao consultar usuários"}), 500
+        return jsonify({"mensagem": "erro ao consultar usuarios"}), 500

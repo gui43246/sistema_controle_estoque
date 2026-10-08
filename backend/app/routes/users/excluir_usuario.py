@@ -18,7 +18,7 @@ def excluir_usuario(drt):
     """Exclui um usuário sem histórico e impede autoexclusão administrativa."""
     drt_logado = get_jwt_identity()
     if drt == drt_logado:
-        return jsonify({"mensagem": "não é permitido excluir o próprio usuário"}), 409
+        return jsonify({"mensagem": "nao e permitido excluir o proprio usuario"}), 409
 
     try:
         with get_db() as conn:
@@ -27,7 +27,7 @@ def excluir_usuario(drt):
                 (drt,),
             ).fetchone()
             if usuario is None:
-                return jsonify({"mensagem": "usuário não encontrado"}), 404
+                return jsonify({"mensagem": "usuario nao encontrado"}), 404
 
             possui_movimentacoes = conn.execute(
                 "SELECT 1 FROM movimentacoes WHERE usuario_drt = ? LIMIT 1",
@@ -36,12 +36,12 @@ def excluir_usuario(drt):
             if possui_movimentacoes is not None:
                 return jsonify({
                     "mensagem": (
-                        "usuário possui movimentações no histórico e não pode ser excluído"
+                        "usuario possui movimentacoes no historico e nao pode ser excluido"
                     )
                 }), 409
 
             conn.execute("DELETE FROM users WHERE drt = ?", (drt,))
 
-        return jsonify({"mensagem": "usuário excluído com sucesso"}), 200
+        return jsonify({"mensagem": "usuario excluido com sucesso"}), 200
     except sqlite3.Error:
-        return jsonify({"mensagem": "erro ao excluir usuário"}), 500
+        return jsonify({"mensagem": "erro ao excluir usuario"}), 500

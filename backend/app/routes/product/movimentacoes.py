@@ -40,4 +40,4 @@ def listar_movimentacoes():
 
         return jsonify([dict(movimentacao) for movimentacao in movimentacoes]), 200
     except sqlite3.Error:
-        return jsonify({"mensagem": "erro ao consultar movimentações"}), 500
+        return jsonify({"mensagem": "erro ao consultar movimentacoes"}), 500

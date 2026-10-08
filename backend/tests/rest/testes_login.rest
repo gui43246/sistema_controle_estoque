@@ -1,0 +1,28 @@
+@baseUrl = http://127.0.0.1:5000
+
+### Login válido (execute primeiro para gerar o token nas outras coleções)
+# @name login
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "drt": "900000000",
+  "senha_digitada": "Admteste123"
+}
+
+### Login com usuário inexistente (esperado: 404)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "drt": "000000000",
+  "senha_digitada": "SenhaInvalida123!"
+}
+
+### Login sem campo obrigatório (esperado: 400)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "drt": "900000000"
+}

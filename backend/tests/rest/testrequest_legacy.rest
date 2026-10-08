@@ -1,56 +1,6 @@
-
-POST http://127.0.0.1:5000/cadastrar
-Content-Type:application/json
-Authorization: Bearer 
-
-{
-  "codigo_barras": "7890000987727",
-  "nome_produto": "sabao em po",
-  "valor_prod": 29.90,
-  "setor_id": 5
-}
-
-###
-GET http://127.0.0.1:5000/estoque
-Content-Type:application/json
-
-###
-
-POST http://127.0.0.1:5000/EditarQuantidade
-Content-Type:application/json
-
-
-{
-  "codigo_barras": "7891234567891",
-  "quantidade":60
-}
-
-###
-POST http://127.0.0.1:5000/EditarValor
-Content-Type:application/json
-
-
-{
-  "codigo_barras": "78912345678",
-  "novo_valor":"30"
-}
-
-###
-POST http://localhost:5000/Cadastro_usuario
-Content-Type:application/json
-
-
- {
-    "DRT": "9015860000",
-    "name": "Guilherme",
-    "Email": "guilher@gmail.com",
-    "numero_tel": "5511987654333",
-    "senha": "SenhaSegura123!"
-}
-###
-
-POST http://localhost:5000/login
-Content-Type:application/json
-
-
-{"drt":"901586988","senha_digitada":"SenhaSegura123!"}
+# Coleção antiga substituída pelos arquivos abaixo.
+# Eles usam login nomeado e capturam o token automaticamente:
+# - testes_login.rest
+# - testes_usuarios.rest
+# - testes_produtos.rest
+# Evite copiar tokens manualmente ou reutilizar tokens expirados.

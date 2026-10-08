@@ -17,27 +17,27 @@ def ajuste_setor():
     dados = request.get_json(silent=True)
 
     if not isinstance(dados, dict):
-        return jsonify({"mensagem": "envie um objeto JSON válido"}), 400
+        return jsonify({"mensagem": "envie um objeto JSON valido"}), 400
     if not dados.get("codigo_barras") or "novo_setor" not in dados:
         return jsonify({"mensagem": "erro: verifique os campos e tente novamente"}), 400
 
     codigo_barras = dados["codigo_barras"]
     if not isinstance(codigo_barras, str) or not codigo_barras.strip():
-        return jsonify({"mensagem": "código de barras inválido"}), 422
+        return jsonify({"mensagem": "codigo de barras invalido"}), 422
     if isinstance(dados["novo_setor"], bool):
-        return jsonify({"mensagem": "setor inválido"}), 422
+        return jsonify({"mensagem": "setor invalido"}), 422
     try:
         setor = int(dados["novo_setor"])
     except (ValueError, TypeError, OverflowError):
-        return jsonify({"mensagem": "setor inválido"}), 422
+        return jsonify({"mensagem": "setor invalido"}), 422
     if setor < 0 or setor > 9_223_372_036_854_775_807:
-        return jsonify({"mensagem": "setor inválido"}), 422
+        return jsonify({"mensagem": "setor invalido"}), 422
 
     produto_existe = buscar(codigo_barras, config="status")
     if produto_existe is None:
         return jsonify({"mensagem": "erro ao consultar produto"}), 500
     if produto_existe is False:
-        return jsonify({"mensagem": "erro: produto não encontrado"}), 404
+        return jsonify({"mensagem": "erro: produto nao encontrado"}), 404
 
     with get_db() as conn:
         setor_existe = conn.execute(
@@ -45,7 +45,7 @@ def ajuste_setor():
             (setor,),
         ).fetchone()
     if setor_existe is None:
-        return jsonify({"mensagem": "setor não encontrado"}), 404
+        return jsonify({"mensagem": "setor nao encontrado"}), 404
 
     sucesso = Produto.setor_ajustar(codigo_barras, setor)
 

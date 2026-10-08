@@ -1,0 +1,121 @@
+@baseUrl = http://127.0.0.1:5000
+
+### Login de administrador
+# @name login
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "drt": "900000000",
+  "senha_digitada": "Admteste123"
+}
+
+### Captura automática do token
+@token = {{login.response.body.token}}
+
+### Cadastrar produto de teste (esperado: 201; se já existir, 409)
+POST {{baseUrl}}/cadastrar
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "7890000987727",
+  "nome_produto": "Sabao em po teste",
+  "valor_prod": 29.90,
+  "setor_id": 5
+}
+
+### Cadastrar produto sem campo obrigatório (esperado: 400)
+POST {{baseUrl}}/cadastrar
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "7890000987728"
+}
+
+### Buscar produto existente (esperado: 200; exige produto previamente cadastrado)
+POST {{baseUrl}}/produto
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "7890000987727"
+}
+
+### Buscar produto inexistente (esperado: 404)
+POST {{baseUrl}}/produto
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "0000000000000"
+}
+
+### Consultar estoque (esperado: 200)
+GET {{baseUrl}}/estoque
+Authorization: Bearer {{token}}
+
+### Ajustar quantidade (esperado: 200; motivo 2 = Compra de produto)
+POST {{baseUrl}}/EditarQuantidade
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "7890000987727",
+  "quantidade": 60,
+  "motivo": 2
+}
+
+### Quantidade negativa (esperado: 422)
+POST {{baseUrl}}/EditarQuantidade
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "7890000987727",
+  "quantidade": -1,
+  "motivo": 2
+}
+
+### Alterar valor (esperado: 200)
+POST {{baseUrl}}/EditarValor
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "7890000987727",
+  "novo_valor": 30.00
+}
+
+### Valor inválido (esperado: 422)
+POST {{baseUrl}}/EditarValor
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "7890000987727",
+  "novo_valor": -1
+}
+
+### Alterar setor (esperado: 200)
+POST {{baseUrl}}/ajuste_setor_produto
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "7890000987727",
+  "novo_setor": 2
+}
+
+### Consultar movimentações (esperado: 200)
+GET {{baseUrl}}/movimentacoes
+Authorization: Bearer {{token}}
+
+### Excluir produto inexistente (esperado: 404)
+DELETE {{baseUrl}}/produto/0000000000000
+Authorization: Bearer {{token}}
+
+### Excluir produto de teste sem movimentações (esperado: 200; cadastre antes um produto descartável sem movimentações)
+DELETE {{baseUrl}}/produto/7890000987728
+Authorization: Bearer {{token}}
