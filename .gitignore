@@ -7,3 +7,6 @@
 # IDEs
 .vscode/
 .idea/
+__pycache__
+.json
+.db
