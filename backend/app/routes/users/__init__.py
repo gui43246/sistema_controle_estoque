@@ -6,3 +6,4 @@ users_bp = Blueprint("users", __name__)
 from . import cadastrar_usuario, reset_senha, login, listar_usuarios, excluir_usuario
 
 
+

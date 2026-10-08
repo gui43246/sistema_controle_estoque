@@ -2,6 +2,7 @@
 
 import sqlite3
 import os
+import bcrypt
 
 from dotenv import load_dotenv
 
@@ -116,6 +117,26 @@ def get_db():
     return conn
 
 
+def criar_adm_text(
+    drt="900000000",
+    nome="adm",
+    email="adm@text.com",
+    numero="11991901212",
+    senha="Admteste123",
+):
+    """Cria a conta de administrador usada nos testes, se ainda não existir."""
+    senha_hash = bcrypt.hashpw(senha.encode("utf-8"), bcrypt.gensalt(rounds=12))
+    with get_db() as conn:
+        conn.execute(
+            """INSERT OR IGNORE INTO users
+               (drt, name, email, numero_telefone, senha, tipo_user)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (drt, nome, email, numero, senha_hash, "adm"),
+        )
+    return "ok, tudo pronto pra testes"
+
+
 if __name__ == "__main__":
     init_db()
     print("Banco de dados inicializado com sucesso!")
+    print(criar_adm_text())

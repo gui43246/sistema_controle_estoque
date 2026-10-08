@@ -7,6 +7,11 @@
 # IDEs
 .vscode/
 .idea/
-__pycache__
+__pycache__/
+*.py[cod]
 .json
-.db
+*.db
+*.sqlite
+*.sqlite3
+*.db-*
+*.sqlite-*
