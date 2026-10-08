@@ -1,0 +1,6 @@
+{
+    "code-runner.executorMap": {
+        "python": "set PYTHONPATH=$workspaceRoot\\Sistema_controle_estoque\\backend && python $fullFileName"
+    },
+    "python-envs.defaultEnvManager": "ms-python.python:system"
+}

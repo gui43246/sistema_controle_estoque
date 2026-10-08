@@ -1,0 +1,7 @@
+@baseUrl = http://127.0.0.1:5000
+@adminToken = cole_o_token_de_administrador
+@drtUsuario = 123456789
+
+### Excluir usuário sem movimentações
+DELETE {{baseUrl}}/usuarios/{{drtUsuario}}
+Authorization: Bearer {{adminToken}}
