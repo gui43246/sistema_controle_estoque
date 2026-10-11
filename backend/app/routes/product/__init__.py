@@ -6,11 +6,11 @@ produtos_bp = Blueprint("produtos", __name__)
 
 from . import (
     cadastrar,
+    consultar,
     editar_quantidade,
     estoque,
     editar_valor,
     ajuste_setor,
     excluir,
     movimentacoes,
-    buscar_produto,
 )
