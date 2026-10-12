@@ -1,13 +1,12 @@
 """Valida e altera o preço de um produto existente."""
 
-from flask import blueprints ,request, jsonify
+from flask import blueprints, request, jsonify
 from app.models.produto import Produto
 from app.services.buscar import buscar
 from app.routes.product import produtos_bp
 from app.security.authorization import admin_required
 from app import limiter
 import math
-
 
 
 @produtos_bp.route("/EditarValor", methods=["POST"])
@@ -30,7 +29,7 @@ def ajustar_valor_produto():
         if isinstance(requisicao["novo_valor"], bool):
             raise ValueError
         valor = float(requisicao["novo_valor"])
-        if not math.isfinite(valor) or valor < 0:
+        if not math.isfinite(valor) or valor <= 0:
             return jsonify({"mensagem": "novo valor invalido"}), 422
 
         produto_existe = buscar(codigo_barras, config="status")

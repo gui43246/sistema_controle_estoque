@@ -26,6 +26,8 @@ def ajuste_setor():
         return jsonify({"mensagem": "codigo de barras invalido"}), 422
     if isinstance(dados["novo_setor"], bool):
         return jsonify({"mensagem": "setor invalido"}), 422
+    if isinstance(dados["novo_setor"], float) and not dados["novo_setor"].is_integer():
+        return jsonify({"mensagem": "setor invalido"}), 422
     try:
         setor = int(dados["novo_setor"])
     except (ValueError, TypeError, OverflowError):

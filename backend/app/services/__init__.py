@@ -5,3 +5,5 @@ from .validar_senha import validar_senha
 from .validar_numero import validar_telefone
 from .validar_email import validar_email
 from .validar_name import validar_name
+from .regmovit import registrar_movimentacao
+from .motivos import buscar_motivo

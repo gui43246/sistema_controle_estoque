@@ -1,8 +1,9 @@
 """Recebe um codigo de barras na requisição consulta o estoque e retorna o produto ."""
 
 from flask import jsonify, request
+from flask_jwt_extended.utils import get_jwt_identity
 from flask_jwt_extended import jwt_required
-
+from app.services import registrar_movimentacao
 from app.routes.product import produtos_bp
 from app.services.buscar import buscar
 from app import limiter
@@ -13,6 +14,7 @@ from app import limiter
 @jwt_required()
 def consultar_produto_por_codigo():
     """Valida o JSON e retorna os dados do produto encontrado pelo serviço de busca."""
+    usuario = get_jwt_identity()
     dados = request.get_json(silent=True)
     if not isinstance(dados, dict):
         return jsonify({"mensagem": "envie um objeto JSON valido"}), 400

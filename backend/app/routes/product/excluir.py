@@ -22,11 +22,16 @@ def excluir_produto_rota(codigo_barras):
     if resultado == "nao_encontrado":
         return jsonify({"mensagem": "produto nao encontrado"}), 404
     if resultado == "tem_movimentacoes":
-        return jsonify({
-            "mensagem": (
-                "produto possui movimentacoes no historico e nao pode ser excluido; "
-                "mantenha o registro para preservar o historico"
-            )
-        }), 409
+        return (
+            jsonify(
+                {
+                    "mensagem": (
+                        "produto possui movimentacoes no historico e nao pode ser excluido; "
+                        "mantenha o registro para preservar o historico"
+                    )
+                }
+            ),
+            409,
+        )
 
     return jsonify({"mensagem": "produto e registro de estoque excluidos"}), 200

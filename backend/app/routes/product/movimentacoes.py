@@ -17,8 +17,7 @@ def listar_movimentacoes():
     """Retorna o histórico de movimentações com produto e usuário associados."""
     try:
         with get_db() as conn:
-            movimentacoes = conn.execute(
-                """
+            movimentacoes = conn.execute("""
                 SELECT
                     m.id,
                     m.codigo_barras,
@@ -35,8 +34,7 @@ def listar_movimentacoes():
                 LEFT JOIN users u
                     ON u.drt = m.usuario_drt
                 ORDER BY m.data_hora DESC, m.id DESC
-                """
-            ).fetchall()
+                """).fetchall()
 
         return jsonify([dict(movimentacao) for movimentacao in movimentacoes]), 200
     except sqlite3.Error:

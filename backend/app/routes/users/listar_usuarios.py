@@ -17,13 +17,11 @@ def listar_usuarios():
     """Retorna os dados públicos dos usuários autenticados."""
     try:
         with get_db() as conn:
-            usuarios = conn.execute(
-                """
+            usuarios = conn.execute("""
                 SELECT id, drt, name, email, numero_telefone, tipo_user
                 FROM users
                 ORDER BY name COLLATE NOCASE
-                """
-            ).fetchall()
+                """).fetchall()
 
         return jsonify([dict(usuario) for usuario in usuarios]), 200
     except sqlite3.Error:

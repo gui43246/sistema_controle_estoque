@@ -52,11 +52,14 @@ class Produto:
         try:
             with get_db() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE Produtos_cadastrados
                     SET setor_id = ?
                     WHERE codigo_barras = ?
-                """, (novo_setor, codigo_barras))
+                """,
+                    (novo_setor, codigo_barras),
+                )
                 if cursor.rowcount == 0:
                     return False
                 conn.commit()
@@ -79,20 +82,23 @@ class Produto:
                 - (False, 3): erro inesperado no banco de dados.
         """
         if quantidade < 0:
-            return False 
+            return False
 
         try:
             with get_db() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE estoque
                     SET quantidade = ?
                     WHERE codigo_barras = ?
-                """, (quantidade, codigo_barras))
+                """,
+                    (quantidade, codigo_barras),
+                )
                 if cursor.rowcount == 0:
                     return False
                 conn.commit()
-            return True 
+            return True
         except sqlite3.Error:
             return False
 
@@ -111,22 +117,22 @@ class Produto:
                 - (False, 3): erro inesperado no banco de dados.
         """
         if valor <= 0:
-            return False 
+            return False
 
         try:
             with get_db() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE Produtos_cadastrados
                     SET valor_prod = ?
                     WHERE codigo_barras = ?
-                """, (valor, codigo_barras))
+                """,
+                    (valor, codigo_barras),
+                )
                 if cursor.rowcount == 0:
                     return False
                 conn.commit()
-            return True  
+            return True
         except sqlite3.Error:
-            return False  
-
-
-
+            return False

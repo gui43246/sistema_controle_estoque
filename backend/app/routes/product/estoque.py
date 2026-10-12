@@ -1,21 +1,21 @@
 """Lista os produtos e as quantidades disponíveis no estoque."""
 
-from flask import Flask,request,jsonify
+from flask import Flask, request, jsonify
 import sqlite3
 from app.DATABASE import get_db
 from app.routes.product import produtos_bp
 from flask_jwt_extended import jwt_required
 from app import limiter
 
-@produtos_bp.route("/estoque",methods=["GET"])
+
+@produtos_bp.route("/estoque", methods=["GET"])
 @limiter.limit("30 per minute")
 @jwt_required()
-def  listar_estoque():
-    
+def listar_estoque():
     """Retorna uma lista JSON dos produtos com saldo de estoque."""
     try:
         with get_db() as conn:
-            conn.row_factory= sqlite3.Row
+            conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute("""
                            SELECT
@@ -28,14 +28,16 @@ def  listar_estoque():
                            JOIN estoque e ON p.codigo_barras = e.codigo_barras
                            """)
             produtos = cursor.fetchall()
-            lista =[]
+            lista = []
             for p in produtos:
-                lista.append({
-                   "codigo_barras":p["codigo_barras"],
-                   "nome_produto": p["nome_produto"],
-                   "valor_produto": p["valor_prod"],
-                    "quantidade": p["quantidade"]
-                })
+                lista.append(
+                    {
+                        "codigo_barras": p["codigo_barras"],
+                        "nome_produto": p["nome_produto"],
+                        "valor_produto": p["valor_prod"],
+                        "quantidade": p["quantidade"],
+                    }
+                )
             return jsonify(lista)
     except Exception as e:
-        return  jsonify({"mensagem":f"erro: {e}"}),500
+        return jsonify({"mensagem": f"erro: {e}"}), 500

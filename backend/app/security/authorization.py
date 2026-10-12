@@ -28,9 +28,7 @@ def admin_required(view_function):
         tipo_usuario = (usuario["tipo_user"] or "").strip().lower()
         if tipo_usuario not in {"adm", "admin", "user_adm", "user_admin"}:
             return (
-                jsonify(
-                    {"mensagem": "usuario sem permicao "}
-                ),
+                jsonify({"mensagem": "usuario sem permicao "}),
                 403,
             )
 

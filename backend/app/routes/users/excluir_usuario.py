@@ -34,11 +34,16 @@ def excluir_usuario(drt):
                 (drt,),
             ).fetchone()
             if possui_movimentacoes is not None:
-                return jsonify({
-                    "mensagem": (
-                        "usuario possui movimentacoes no historico e nao pode ser excluido"
-                    )
-                }), 409
+                return (
+                    jsonify(
+                        {
+                            "mensagem": (
+                                "usuario possui movimentacoes no historico e nao pode ser excluido"
+                            )
+                        }
+                    ),
+                    409,
+                )
 
             conn.execute("DELETE FROM users WHERE drt = ?", (drt,))
 

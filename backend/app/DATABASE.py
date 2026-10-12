@@ -13,7 +13,7 @@ DB_PATH = os.path.join(BASE_DIR, os.getenv("CAMINHO_BANCO"))
 
 
 def init_db():
-    """Cria as tabelas necessárias e insere os setores e motivos padrão."""
+    """Cria tabelas e dados iniciais, evitando duplicar setores existentes."""
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
 
@@ -22,16 +22,15 @@ def init_db():
             nome_setor TEXT NOT NULL UNIQUE)""")
 
         setores = [
-        ("Perfumaria",),
-        ("Drogaria",),
-        ("Mercearia seca",),
-        ("Mercearia líquida",),
-        ("DPH - Departamento de Higiene Pessoal",),
-        ("Hortifruti",),
-        ("Padaria",),
-        ("Açougue",),
+            ("Perfumaria",),
+            ("Drogaria",),
+            ("Mercearia seca",),
+            ("Mercearia líquida",),
+            ("DPH - Departamento de Higiene Pessoal",),
+            ("Hortifruti",),
+            ("Padaria",),
+            ("Açougue",),
         ]
-        # Também evita duplicatas em bancos antigos, cuja tabela ainda não tem UNIQUE.
         for (nome_setor,) in setores:
             cursor.execute(
                 "SELECT 1 FROM setor WHERE nome_setor = ? LIMIT 1",
@@ -68,8 +67,7 @@ def init_db():
                            tipo_user TEXT DEFAULT "user_comum"
                            )
                        """)
-       
-        
+
         cursor.execute("""
     CREATE TABLE IF NOT EXISTS motivos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -88,10 +86,10 @@ def init_db():
                 ("Produto vencido",),
                 ("Recepção",),
                 ("Ruptura",),
-                ("exclusão",)
+                ("exclusão",),
             ],
         )
-        
+
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS movimentacoes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

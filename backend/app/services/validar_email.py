@@ -9,7 +9,7 @@ provedores_email = [
     "yahoo.com",
     "icloud.com",
     "live.com",
-    "aol.com"
+    "aol.com",
 ]
 
 
@@ -44,11 +44,9 @@ def validar_email(email: str) -> bool:
     if not email:
         return False
 
-    padrao = r'^(?!\.)[a-zA-Z0-9._%+-]+(?<!\.)@(?!-)(?!\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$'
+    padrao = r"^(?!\.)[a-zA-Z0-9._%+-]+(?<!\.)@(?!-)(?!\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$"
     if not bool(re.match(padrao, email)):
         return False
 
     dominio = email.split("@")[-1].lower()
     return dominio in provedores_email
-
-

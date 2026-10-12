@@ -13,7 +13,4 @@ def buscar_motivo(id: int) -> str | None:
         )
         resultado = cursor.fetchone()
 
-        if resultado is None:
-            return None
-
-        return resultado["descricao"]
+        return resultado["descricao"] if resultado is not None else None
