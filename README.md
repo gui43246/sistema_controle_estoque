@@ -150,15 +150,20 @@ backend/
 └── requirements.txt  # Dependências Python
 ```
 
-## Testes
+## Testes automatizados
 
-Os arquivos em `backend/tests/rest/` são requisições para testar a API manualmente com uma extensão de cliente REST, como REST Client no VS Code. Inicie o servidor e execute primeiro o login para obter o token; as demais requisições protegidas usam esse token.
-
-Para verificar se há testes automatizados, execute na raiz do projeto:
+Instale as dependências e execute a suíte pytest a partir da raiz:
 
 ```powershell
-$env:PYTHONPATH = "$PWD\backend"
-python -m unittest discover -s backend\tests -v
+python -m pip install -r backend\requirements.txt
+python -m pytest
 ```
 
-No estado atual do repositório, essa descoberta não encontra testes automatizados (`Ran 0 tests`).
+Os testes da API ficam em `tests/`, com um arquivo por endpoint. Cada chamada
+registra sucesso, resposta HTTP de falha esperada ou exceção em `logs/app.log`.
+O logger reutilizável está em `backend/app/utils/logger.py`; use
+`get_logger()` ou `log_message("INFO" | "WARNING" | "ERROR", mensagem)`.
+Para escolher outro arquivo de saída, defina `ESTOQUE_LOG_FILE` antes de iniciar
+a aplicação ou os testes.
+
+

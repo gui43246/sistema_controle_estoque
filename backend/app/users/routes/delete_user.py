@@ -1,0 +1,47 @@
+"""Exclui usuários sem movimentações associadas, preservando o histórico."""
+
+import sqlite3
+
+from flask import jsonify
+from flask_jwt_extended import get_jwt_identity
+
+from app import limiter
+from app.core.database import get_db
+from app.users import users_bp
+from app.core.security.authorization import admin_required
+
+
+@users_bp.route("/usuarios/<string:drt>", methods=["DELETE"])
+@limiter.limit("30 per minute")
+@admin_required
+def excluir_usuario(drt):
+    """Exclui um usuário sem histórico e impede autoexclusão administrativa."""
+    drt_logado = get_jwt_identity()
+    if drt == drt_logado:
+        return jsonify({"mensagem": "nao e permitido excluir o proprio usuario"}), 409
+
+    try:
+        with get_db() as conn:
+            usuario = conn.execute(
+                "SELECT drt FROM users WHERE drt = ?",
+                (drt,),
+            ).fetchone()
+            if usuario is None:
+                return jsonify({"mensagem": "usuario nao encontrado"}), 404
+
+            possui_movimentacoes = conn.execute(
+                "SELECT 1 FROM movimentacoes WHERE usuario_drt = ? LIMIT 1",
+                (drt,),
+            ).fetchone()
+            if possui_movimentacoes is not None:
+                return jsonify({
+                    "mensagem": (
+                        "usuario possui movimentacoes no historico e nao pode ser excluido"
+                    )
+                }), 409
+
+            conn.execute("DELETE FROM users WHERE drt = ?", (drt,))
+
+        return jsonify({"mensagem": "usuario excluido com sucesso"}), 200
+    except sqlite3.Error:
+        return jsonify({"mensagem": "erro ao excluir usuario"}), 500

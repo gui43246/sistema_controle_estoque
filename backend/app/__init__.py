@@ -28,8 +28,8 @@ limiter = Limiter(
 )
 
 # Importar as rotas depois de criar o limiter, pois elas o usam nos decorators.
-from .routes.product import produtos_bp
-from .routes.users import users_bp
+from .products import produtos_bp
+from .users import users_bp
 
 # Registrar blueprints.
 app.register_blueprint(produtos_bp)
