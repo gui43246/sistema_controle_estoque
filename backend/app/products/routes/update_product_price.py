@@ -1,20 +1,29 @@
 """Valida e altera o preço de um produto existente."""
 
-from flask import blueprints ,request, jsonify
-from app.products.services.update_product_price import update_product_price
-from app.products.services.find_product import buscar
-from app.products import produtos_bp
-from app.core.security.authorization import admin_required
-from app import limiter
+import logging
 import math
 
+from flask import jsonify, request
+from flask_jwt_extended.utils import get_jwt_identity
+
+from app import limiter
+from app.core.security.authorization import admin_required
+from app.products import produtos_bp
+from app.products.services.find_product import buscar
+from app.products.services.update_product_price import (
+    ProdutoNaoEncontradoError,
+    update_product_price,
+)
+
+logger = logging.getLogger(__name__)
 
 
 @produtos_bp.route("/EditarValor", methods=["POST"])
 @limiter.limit("30 per minute")
 @admin_required
 def ajustar_valor_produto():
-    """Valida o novo preço e atualiza o produto por codigo de barras."""
+    """Valida o novo preço e atualiza o produto por código de barras."""
+    usuario_logado = get_jwt_identity()
     requisicao = request.get_json(silent=True)
 
     if not isinstance(requisicao, dict):
@@ -26,25 +35,27 @@ def ajustar_valor_produto():
     if not isinstance(codigo_barras, str) or not codigo_barras.strip():
         return jsonify({"mensagem": "codigo de barras invalido"}), 422
 
+    novo_valor = requisicao["novo_valor"]
+    if isinstance(novo_valor, bool):
+        return jsonify({"mensagem": "novo valor invalido"}), 422
     try:
-        if isinstance(requisicao["novo_valor"], bool):
-            raise ValueError
-        valor = float(requisicao["novo_valor"])
-        if not math.isfinite(valor) or valor < 0:
-            return jsonify({"mensagem": "novo valor invalido"}), 422
-
-        produto_existe = buscar(codigo_barras, config="status")
-        if produto_existe is None:
-            return jsonify({"mensagem": "erro ao consultar produto"}), 500
-        if produto_existe is False:
-            return jsonify({"mensagem": "produto nao encontrado"}), 404
-
+        valor = float(novo_valor)
     except (TypeError, ValueError, OverflowError):
         return jsonify({"mensagem": "novo valor invalido"}), 422
+    if not math.isfinite(valor) or valor < 0:
+        return jsonify({"mensagem": "novo valor invalido"}), 422
 
-    ajuste_devalor = update_product_price(codigo_barras, valor)
+    try:
+        # Produto excluído conta como não encontrado.
+        if not buscar(codigo_barras):
+            return jsonify({"mensagem": "produto nao encontrado"}), 404
 
-    if not ajuste_devalor:
-        return jsonify({"mensagem": "produto nao encontrado ou erro no banco"}), 404
-    else:
-        return jsonify({"mensagem": "ok valor inserido com sucesso"}), 200
+        update_product_price(codigo_barras, valor, usuario_logado)
+
+    except ProdutoNaoEncontradoError:
+        return jsonify({"mensagem": "produto nao encontrado"}), 404
+    except Exception:
+        logger.exception("erro ao atualizar preco")
+        return jsonify({"mensagem": "erro inesperado, tente novamente mais tarde"}), 500
+
+    return jsonify({"mensagem": "ok valor inserido com sucesso"}), 200

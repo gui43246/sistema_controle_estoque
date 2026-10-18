@@ -1,12 +1,19 @@
 """Valida as credenciais e emite um token de acesso."""
 
-from flask import request, jsonify
-from app.core.database import get_db
-import sqlite3
-from app.users import users_bp
-from app.core.security.password_hash_verification import verifique_hash
-from app.core.security.jwt_authentication import GerarTokenAcesso
+import logging
+
+from flask import jsonify, request
+
 from app import limiter
+from app.core.database import get_db
+from app.core.security.jwt_authentication import GerarTokenAcesso
+from app.core.security.password_hash import criar_hash
+from app.core.security.password_hash_verification import verifique_hash
+from app.users import users_bp
+
+logger = logging.getLogger(__name__)
+
+HASH_FALSO = criar_hash("Descartavel1!")
 
 
 @users_bp.route("/login", methods=["POST"])
@@ -14,10 +21,9 @@ from app import limiter
 def login():
     """Valida credenciais e retorna um JWT quando a senha está correta."""
     dados = request.get_json(silent=True)
-    dados_esperados = ["drt", "senha_digitada"]
 
     if not isinstance(dados, dict) or any(
-        dado not in dados for dado in dados_esperados
+        campo not in dados for campo in ("drt", "senha_digitada")
     ):
         return jsonify({"mensagem": "Verifique os dados e tente novamente"}), 400
 
@@ -31,28 +37,20 @@ def login():
     ):
         return jsonify({"mensagem": "DRT e senha devem ser textos validos"}), 400
 
-    with get_db() as conn:
-        try:
-            cursor = conn.cursor()
-            cursor.execute(
-                """
-                SELECT drt, senha
-                FROM users
-                WHERE drt = ?
-            """,
-                (drt,),
-            )
-            resultado = cursor.fetchone()
+    try:
+        with get_db() as conn:
+            usuario = conn.execute(
+                "SELECT drt, senha FROM users WHERE drt = ?", (drt,)
+            ).fetchone()
+    except Exception:
+        logger.exception("erro ao consultar usuario no login")
+        return jsonify({"mensagem": "erro interno, tente novamente mais tarde"}), 500
 
-            if not resultado:
-                return jsonify({"mensagem": "Usuario sem registro"}), 404
+    senha_armazenada = usuario["senha"] if usuario else HASH_FALSO
+    senha_confere = verifique_hash(senha_digitada, senha_armazenada)
 
-            senha_armazenada = resultado[1]
-            if verifique_hash(senha_digitada, senha_armazenada):
-                token = GerarTokenAcesso(identidade=drt)
-                return jsonify({"sucesso": "liberado", "token": token}), 200
-            else:
-                return jsonify({"erro": "Senha incorreta"}), 401
+    if usuario is None or not senha_confere:
+        return jsonify({"mensagem": "DRT ou senha incorretos"}), 401
 
-        except (sqlite3.Error, Exception):
-            return jsonify({"erro": "Erro interno, tente novamente mais tarde"}), 500
+    token = GerarTokenAcesso(identidade=drt)
+    return jsonify({"mensagem": "login realizado", "token": token}), 200

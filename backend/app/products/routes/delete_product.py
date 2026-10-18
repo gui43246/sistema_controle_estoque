@@ -1,49 +1,46 @@
-"""Processa a exclusão administrativa de um produto sem histórico de movimentações."""
+"""Processa a exclusão lógica de um produto e registra a movimentação."""
 
-import sqlite3
+import logging
 
 from flask import jsonify, request
-from app.products import produtos_bp
-from app.models.movimentacao import Movimentacao
-from app.products.services.delete_product import excluir_produto
-from app.core.security.authorization import admin_required
-from app import limiter
 from flask_jwt_extended.utils import get_jwt_identity
+
+from app import limiter
+from app.core.security.authorization import admin_required
+from app.models.product import ProdutoNaoEncontradoError
+from app.products import produtos_bp
+from app.products.services.delete_product import excluir_produto
+
+logger = logging.getLogger(__name__)
+
+MOTIVO_EXCLUSAO = 10  
 
 
 @produtos_bp.route("/ExcluirProduto", methods=["PUT"])
 @limiter.limit("30 per minute")
 @admin_required
 def excluir_produto_rota():
+    """Valida o código de barras e exclui logicamente o produto."""
     usuario_logado = get_jwt_identity()
-    """Converte o resultado do serviço de exclusão em uma resposta HTTP."""
     dados = request.get_json(silent=True)
-    if not isinstance(dados, dict) or not {"codigo_barras", "motivo"}.issubset(dados):
-        return jsonify({"mensagem": "Dados inválidos ou incompletos"}), 400
+
+    if not isinstance(dados, dict) or "codigo_barras" not in dados:
+        return jsonify({"mensagem": "dados invalidos ou incompletos"}), 400
 
     codigo_barras = dados["codigo_barras"]
-    try:
-        motivo = int(dados["motivo"])
-    except (ValueError, TypeError, OverflowError):
-        return jsonify({"mensagem": "o campo motivo é invalido"}), 400
-
-    if Movimentacao.buscar_motivo(motivo) is None:
-        return jsonify({"mensagem": "motivo nao encontrado"}), 404
+    if not isinstance(codigo_barras, str) or not codigo_barras.strip():
+        return jsonify({"mensagem": "codigo de barras invalido"}), 422
 
     try:
-        resultado = excluir_produto(codigo_barras)
-    except sqlite3.Error:
-        return jsonify({"mensagem": "erro ao excluir produto; tente novamente"}), 500
-
-    if resultado == "nao_encontrado":
+        excluir_produto(codigo_barras, MOTIVO_EXCLUSAO, usuario_logado)
+    except ProdutoNaoEncontradoError:
         return jsonify({"mensagem": "produto nao encontrado"}), 404
+    except ValueError:
+        # O motivo é fixo no servidor: se não existe na tabela, é erro de configuração.
+        logger.exception("motivo de exclusao nao existe na tabela motivos")
+        return jsonify({"mensagem": "erro inesperado, tente novamente mais tarde"}), 500
+    except Exception:
+        logger.exception("erro ao excluir produto")
+        return jsonify({"mensagem": "erro inesperado, tente novamente mais tarde"}), 500
 
-    if resultado == "excluido":
-        Movimentacao.registrar(
-            codigo_barras=codigo_barras,
-            quantidade=0,
-            status="exclusão",
-            motivo=motivo,
-            usuario_drt=usuario_logado
-            )
-        return jsonify({"mensagem": "produto e registro de estoque excluidos"}), 200
+    return jsonify({"mensagem": "produto excluido com sucesso"}), 200

@@ -47,6 +47,8 @@ class Produto:
             raise ValueError("nome do produto invalido")
         if isinstance(valor_produto, bool) or isinstance(setor, bool):
             raise ValueError("Campo invalido: valor_prod ou setor_id")
+        if isinstance(setor, float) and not setor.is_integer():
+            raise ValueError("setor_id invalido")
 
         try:
             valor_produto = float(valor_produto)
@@ -81,31 +83,26 @@ class Produto:
         self.setor = setor
         self.quantidade = quantidade
 
-    def commit(self):
-        """Insere o produto e cria seu registro de estoque inicial.
+    def inserir(self, conn):
+        """Insere o produto e seu registro de estoque inicial.
 
-        Returns:
-            ``True`` quando os dois registros são gravados; ``False`` quando
-            uma operação SQLite falha.
+        Não faz commit: quem abriu a transação é responsável por isso.
+
+        Raises:
+            sqlite3.IntegrityError: Se o código de barras já existe.
+            sqlite3.Error: Para qualquer outra falha do banco.
         """
-        try:
-            with get_db() as conn:
-                conn.execute(
-                    """INSERT INTO Produtos_cadastrados(
-                           codigo_barras, nome_produto, valor_prod, setor_id
-                       ) VALUES (?, ?, ?, ?)""",
-                    (
-                        self.codigo_barras,
-                        self.nome_produto,
-                        self.valor_produto,
-                        self.setor,
-                    ),
-                )
-                conn.execute(
-                    "INSERT INTO estoque(codigo_barras) VALUES (?)",
-                    (self.codigo_barras,),
-                )
-                conn.commit()
-            return True
-        except sqlite3.Error:
-            return False
+        conn.execute(
+            """INSERT INTO Produtos_cadastrados(
+                    codigo_barras, nome_produto, valor_prod, setor_id
+                ) VALUES (?, ?, ?, ?)""",
+            (self.codigo_barras, self.nome_produto, self.valor_produto, self.setor),
+        )
+        conn.execute(
+            "INSERT INTO estoque(codigo_barras) VALUES (?)",
+            (self.codigo_barras,),
+        )
+        
+        
+class ProdutoNaoEncontradoError(LookupError):
+    """O código de barras informado não existe ou não está ativo."""

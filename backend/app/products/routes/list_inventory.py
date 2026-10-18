@@ -26,6 +26,7 @@ def  listar_estoque():
                            e.quantidade
                            FROM Produtos_cadastrados p 
                            JOIN estoque e ON p.codigo_barras = e.codigo_barras
+                           WHERE p.status = 'ativo'
                            """)
             produtos = cursor.fetchall()
             lista =[]
@@ -33,7 +34,8 @@ def  listar_estoque():
                 lista.append({
                    "codigo_barras":p["codigo_barras"],
                    "nome_produto": p["nome_produto"],
-                   "valor_produto": p["valor_prod"],
+                   "valor_prod": p["valor_prod"],
+                   "setor_id": p["setor_id"],
                     "quantidade": p["quantidade"]
                 })
             return jsonify(lista)

@@ -1,6 +1,7 @@
 """Valida e cadastra uma conta de usuário comum."""
 
 from flask import request, jsonify
+import sqlite3
 from app.users import users_bp
 from app.models.create_user import CreateUser, UserValidationError
 from app.core.security.authorization import admin_required
@@ -16,8 +17,11 @@ def cadastrar_usuario():
     except UserValidationError as error:
         return jsonify({"mensagem": str(error)}), error.status_code
     
-    if new_user.commit():
-        return jsonify({"mensagem": "ok usuario cadastrado"}), 201
-    return jsonify({"mensagem": "DRT, email ou telefone ja cadastrados"}), 409
+    try:
+        if new_user.commit():
+            return jsonify({"mensagem": "ok usuario cadastrado"}), 201
+        return jsonify({"mensagem": "DRT, email ou telefone ja cadastrados"}), 409
+    except sqlite3.Error:
+        return jsonify({"mensagem": "erro ao cadastrar usuario"}), 500
 
 

@@ -26,6 +26,8 @@ def consultar_produto_por_codigo():
         produto_existe = buscar(codigo_barras, config="status")
         if produto_existe is False:
             return jsonify({"mensagem": "produto nao encontrado"}), 404
+        if produto_existe is None:
+            return jsonify({"mensagem": "erro ao consultar produto"}), 500
         return jsonify({"mensagem": "erro ao consultar produto"}), 500
 
     return jsonify(produto), 200

@@ -3,8 +3,8 @@
 from app.core.database import get_db
 
 
-def buscar_setor(id: int) -> str:
-    """Retorna a linha do setor encontrado ou a indicação textual de setor desconhecido."""
+def buscar_setor(id: int) -> str | None:
+    """Retorna o nome do setor ou None quando o identificador não existe."""
     with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -14,6 +14,4 @@ def buscar_setor(id: int) -> str:
             (id,),
         )
         resultado = cursor.fetchone()
-        if resultado is None:
-            return "nao indentificado"
-        return resultado
+        return resultado["nome_setor"] if resultado is not None else None

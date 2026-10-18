@@ -87,17 +87,19 @@ def init_db():
 
         cursor.executemany(
             "INSERT OR IGNORE INTO motivos (descricao) VALUES (?)",
-            [
-                ("cadastro de item",),
-                ("Compra de produto",),
-                ("Devolução",),
-                ("Ajuste de estoque",),
-                ("Produto danificado",),
-                ("Produto vencido",),
-                ("Recepção",),
-                ("Ruptura",),
-                ("exclusão",)
-            ],
+          [
+        ("cadastro de item",),
+        ("Compra de produto",),
+        ("Devolução",),
+        ("Ajuste de estoque",),
+        ("valor ajustado",),
+        ("Produto danificado",),
+        ("Produto vencido",),
+        ("Recepção",),
+        ("Ruptura",),
+        ("exclusão",),
+        ("Venda",),
+    ],
         )
         
         #cria uma tabela de movimentações que é responsavel por guardar um historico de ações 
@@ -105,9 +107,11 @@ def init_db():
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS movimentacoes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            codigo_barras TEXT NOT NULL,
-            quantidade INTEGER NOT NULL,
             status TEXT NOT NULL CHECK (status IN ('entrada','ajuste','exclusão', 'saida')),
+            codigo_barras TEXT NOT NULL,
+            quantidade INTEGER DEFAULT 0,
+            old_valor FLOAT DEFAULT 0,
+            new_valor FLOAT DEFAULT 0,
             motivo TEXT NOT NULL,
             data_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             usuario_drt TEXT NOT NULL,

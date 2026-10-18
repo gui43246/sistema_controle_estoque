@@ -3,6 +3,7 @@ Cria a aplicação Flask e registra as rotas e a autenticação JWT.
 """
 
 import os
+import unicodedata
 from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
@@ -15,6 +16,30 @@ load_dotenv()
 # Inicializar aplicação Flask
 app = Flask(__name__)
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
+
+
+@app.after_request
+def remover_acentos_das_respostas_json(response):
+    """Remove diacríticos de textos nas respostas JSON da API."""
+    if not response.is_json:
+        return response
+
+    payload = response.get_json(silent=True)
+    if payload is None:
+        return response
+
+    def normalizar(valor):
+        if isinstance(valor, str):
+            decomposed = unicodedata.normalize("NFKD", valor)
+            return "".join(char for char in decomposed if not unicodedata.combining(char))
+        if isinstance(valor, list):
+            return [normalizar(item) for item in valor]
+        if isinstance(valor, dict):
+            return {normalizar(chave): normalizar(item) for chave, item in valor.items()}
+        return valor
+
+    response.set_data(app.json.dumps(normalizar(payload)))
+    return response
 
 # Configurar JWT
 jwt = JWTManager(app)

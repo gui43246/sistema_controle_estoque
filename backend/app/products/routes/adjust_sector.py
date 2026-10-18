@@ -27,10 +27,13 @@ def ajuste_setor():
     if isinstance(dados["novo_setor"], bool):
         return jsonify({"mensagem": "setor invalido"}), 422
     try:
-        setor = int(dados["novo_setor"])
+        setor_original = dados["novo_setor"]
+        setor = int(setor_original)
+        if isinstance(setor_original, float) and not setor_original.is_integer():
+            raise ValueError
     except (ValueError, TypeError, OverflowError):
         return jsonify({"mensagem": "setor invalido"}), 422
-    if setor < 0 or setor > 9_223_372_036_854_775_807:
+    if setor < 1 or setor > 9_223_372_036_854_775_807:
         return jsonify({"mensagem": "setor invalido"}), 422
 
     produto_existe = buscar(codigo_barras, config="status")

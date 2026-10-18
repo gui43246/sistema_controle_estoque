@@ -120,5 +120,5 @@ class CreateUser:
                 )
                 conn.commit()
             return True
-        except sqlite3.Error:
+        except sqlite3.IntegrityError:
             return False

@@ -1,99 +1,90 @@
 # Sistema de Controle de Estoque
 
-API REST para cadastro e consulta de produtos, controle de quantidades em estoque, registro de movimentações e gerenciamento de usuários. O projeto usa Python, Flask e SQLite, com autenticação JWT e permissões administrativas.
-
-## Funcionalidades
-
-- Cadastro e consulta de produtos por código de barras.
-- Consulta do estoque e ajuste de quantidades.
-- Histórico de movimentações com usuário, motivo e data.
-- Alteração de preço e setor e exclusão de produtos.
-- Login e gerenciamento de usuários, incluindo redefinição de senha.
-- Senhas armazenadas com hash e limitação de requisições em algumas rotas.
+API REST para cadastro e consulta de produtos, controle de estoque, registro de movimentações e gerenciamento de usuários. O projeto usa Python, Flask, SQLite, autenticação JWT e permissões administrativas.
 
 ## Requisitos
 
 - Python 3.10 ou superior.
 - `pip`.
 
-## Configuração e execução
+## Configuração
 
-No Windows PowerShell, a partir da pasta do projeto:
-
-```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-py -m pip install -r backend\requirements.txt
-```
-
-Configure o arquivo `.env` na raiz do projeto com o caminho do banco e uma chave JWT própria:
+No diretório raiz do projeto, crie um arquivo `.env`:
 
 ```dotenv
 CAMINHO_BANCO=banco.db
 JWT_SECRET_KEY=troque-por-uma-chave-longa-e-aleatoria
 ```
 
-O caminho do banco é relativo à pasta `backend/app`. Inicialize as tabelas e os dados padrão:
+`CAMINHO_BANCO` é relativo a `backend/app`. O banco será criado em `backend/app/banco.db`.
 
-```powershell
-$env:PYTHONPATH = "$PWD\backend"
-py -m app.DATABASE
+### Instalação e inicialização pelo CMD
+
+```cmd
+rem Execute estes comandos a partir da pasta raiz do projeto
+py -m venv .venv
+.venv\Scripts\activate.bat
+py -m pip install -r backend\requirements.txt
+set PYTHONPATH=%CD%\backend
+py -m app.core.database
 ```
 
-> **Atenção:** o comando de inicialização também cria uma conta administrativa de teste (`900000000`, senha `Admteste123`). Ela é apenas para desenvolvimento local: altere ou remova essa conta antes de disponibilizar o sistema. Não use a chave JWT de exemplo em produção.
+A inicialização cria as tabelas, os setores e os motivos padrão, além de uma conta administrativa local para testes:
 
-Inicie a API:
+- DRT: `900000000`
+- Senha: `Admteste123`
 
-```powershell
+Use essa conta somente em desenvolvimento. Troque a senha ou remova a conta antes de disponibilizar o sistema.
+
+### Iniciar a API
+
+Com o ambiente virtual ativado, na raiz do projeto:
+
+```cmd
 py backend\run.py
 ```
 
-Por padrão, o Flask inicia em `http://127.0.0.1:5000`. O servidor de desenvolvimento está configurado com `debug=True`; use um servidor WSGI e configuração apropriada para produção.
+A API inicia em `http://127.0.0.1:5000`. O servidor embutido do Flask está configurado em modo de depuração e deve ser usado apenas localmente.
 
 ## Autenticação
 
-Envie `POST /login` com `drt` e `senha_digitada`. A resposta inclui um token JWT. Nas rotas protegidas, envie o token no cabeçalho:
+Envie `POST /login` com `drt` e `senha_digitada`. A resposta inclui um token JWT. Para rotas protegidas, envie:
 
 ```http
 Authorization: Bearer <token>
 ```
 
-Rotas marcadas como administrativas exigem um usuário cujo tipo seja `adm`, `admin`, `user_adm` ou `user_admin`. A conta comum criada pelo cadastro recebe o tipo `user_comum`.
+As rotas administrativas aceitam usuários com tipo `adm`, `admin`, `user_adm` ou `user_admin`. Usuários cadastrados pela rota recebem o tipo `user_comum`.
 
 ## Endpoints
 
-Todas as rotas estão na raiz da API, sem prefixo `/api`. Os corpos das requisições são JSON.
+Todas as rotas ficam na raiz da API, sem prefixo `/api`. Os corpos das requisições são JSON.
 
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
 | `POST` | `/login` | Público | Autentica usuário e retorna JWT. |
-| `POST` | `/cadastrar` | Administrador | Cadastra produto e inicia quantidade em zero. |
+| `POST` | `/cadastrar` | Administrador | Cadastra produto com estoque inicial zero. |
 | `POST` | `/consultar` | Autenticado | Consulta produto pelo código de barras. |
-| `GET` | `/estoque` | Autenticado | Lista produtos e quantidades. |
-| `POST` | `/EditarQuantidade` | Administrador | Define a quantidade e registra ajuste e motivo. |
+| `GET` | `/estoque` | Autenticado | Lista produtos ativos e seus saldos. |
+| `POST` | `/EditarQuantidade` | Administrador | Define quantidade e registra o motivo. |
 | `GET` | `/movimentacoes` | Autenticado | Lista o histórico de movimentações. |
 | `POST` | `/EditarValor` | Administrador | Altera o preço de um produto. |
 | `POST` | `/ajuste_setor_produto` | Administrador | Altera o setor de um produto. |
-| `DELETE` | `/produto/<codigo_barras>` | Administrador | Exclui produto sem movimentações associadas. |
+| `PUT` | `/ExcluirProduto` | Administrador | Marca o produto como excluído e registra o motivo. |
 | `POST` | `/Cadastro_usuario` | Administrador | Cadastra usuário comum. |
 | `GET` | `/usuarios` | Autenticado | Lista usuários sem expor hashes de senha. |
 | `POST` | `/reset_senha` | Administrador | Redefine a senha de um usuário. |
 | `DELETE` | `/usuarios/<drt>` | Administrador | Exclui usuário sem movimentações e impede autoexclusão. |
 
-### Exemplos
+### Exemplos de requisição
 
-Login:
+Cadastro de produto (requer token de administrador):
 
-```json
-{
-  "drt": "900000000",
-  "senha_digitada": "Admteste123"
-}
-```
+```http
+POST /cadastrar
+Content-Type: application/json
+Authorization: Bearer <token>
 
-Cadastro de produto (com token de administrador):
-
-```json
 {
   "codigo_barras": "7891234567890",
   "nome_produto": "Produto de exemplo",
@@ -102,15 +93,7 @@ Cadastro de produto (com token de administrador):
 }
 ```
 
-Consulta de produto:
-
-```json
-{
-  "codigo_barras": "7891234567890"
-}
-```
-
-Ajuste de quantidade (o campo `motivo` recebe o ID de um motivo cadastrado):
+Ajuste de quantidade. `motivo` recebe o ID de um motivo cadastrado:
 
 ```json
 {
@@ -120,9 +103,22 @@ Ajuste de quantidade (o campo `motivo` recebe o ID de um motivo cadastrado):
 }
 ```
 
+Exclusão lógica de produto. O registro permanece no banco com status `excluido`; ele deixa de aparecer na consulta e na listagem de estoque:
+
+```http
+PUT /ExcluirProduto
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "codigo_barras": "7891234567890",
+  "motivo": 9
+}
+```
+
 ## Dados iniciais
 
-A inicialização cria os setores e motivos padrão no SQLite. Os setores começam com IDs de 1 a 8; os motivos são inseridos na ordem abaixo e recebem IDs automaticamente:
+A inicialização cria oito setores e nove motivos. Os IDs dos motivos são inseridos nesta ordem:
 
 1. cadastro de item
 2. Compra de produto
@@ -134,36 +130,31 @@ A inicialização cria os setores e motivos padrão no SQLite. Os setores começ
 8. Ruptura
 9. exclusão
 
-O arquivo de banco é criado em `backend/app/<CAMINHO_BANCO>`.
-
 ## Estrutura do projeto
 
 ```text
 backend/
 ├── app/
-│   ├── routes/       # Rotas de produtos e usuários
-│   ├── services/     # Regras de validação e movimentação
-│   ├── security/     # JWT, autorização e hash de senha
-│   ├── models/       # Modelo de produto
-│   └── DATABASE.py   # Inicialização e acesso ao SQLite
-├── tests/            # Arquivos de apoio e requisições REST
-└── requirements.txt  # Dependências Python
+│   ├── core/           # Banco de dados e segurança
+│   ├── models/         # Produtos, usuários e movimentações
+│   ├── products/       # Rotas e serviços de produtos/estoque
+│   ├── users/          # Rotas e validações de usuários
+│   └── utils/          # Logger
+├── requirements.txt
+└── run.py
+tests/
+├── rest/               # Requisições manuais para cliente REST
+└── test_*.py           # Testes automatizados
 ```
 
-## Testes automatizados
+## Testes e logs
 
-Instale as dependências e execute a suíte pytest a partir da raiz:
+Instale as dependências e execute os testes automatizados a partir da raiz:
 
-```powershell
-python -m pip install -r backend\requirements.txt
-python -m pytest
+```cmd
+py -m pytest
 ```
 
-Os testes da API ficam em `tests/`, com um arquivo por endpoint. Cada chamada
-registra sucesso, resposta HTTP de falha esperada ou exceção em `logs/app.log`.
-O logger reutilizável está em `backend/app/utils/logger.py`; use
-`get_logger()` ou `log_message("INFO" | "WARNING" | "ERROR", mensagem)`.
-Para escolher outro arquivo de saída, defina `ESTOQUE_LOG_FILE` antes de iniciar
-a aplicação ou os testes.
+Os arquivos `.rest` em `tests/rest` contêm exemplos para enviar individualmente por um cliente REST. O servidor Flask mostra as requisições recebidas no console. O utilitário em `backend/app/utils/logger.py` grava mensagens quando chamado; os testes automatizados usam esse logger para registrar seus resultados em `logs/app.log`.
 
-
+Para direcionar o logger a outro arquivo, defina `ESTOQUE_LOG_FILE` antes de iniciar os testes.

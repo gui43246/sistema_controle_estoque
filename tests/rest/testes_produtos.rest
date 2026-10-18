@@ -98,6 +98,26 @@ Authorization: Bearer {{token}}
   "novo_valor": -1
 }
 
+### Valor zero (esperado: 200)
+POST {{baseUrl}}/EditarValor
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "7890000987727",
+  "novo_valor": 0
+}
+
+### Restaurar o valor do produto (esperado: 200)
+POST {{baseUrl}}/EditarValor
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "7890000987727",
+  "novo_valor": 30.00
+}
+
 ### Alterar setor (esperado: 200)
 POST {{baseUrl}}/ajuste_setor_produto
 Content-Type: application/json
@@ -106,6 +126,37 @@ Authorization: Bearer {{token}}
 {
   "codigo_barras": "7890000987727",
   "novo_setor": 2
+}
+
+### Setor inexistente (esperado: 404)
+POST {{baseUrl}}/ajuste_setor_produto
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "7890000987727",
+  "novo_setor": 999
+}
+
+### Setor zero inválido (esperado: 422)
+POST {{baseUrl}}/ajuste_setor_produto
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "7890000987727",
+  "novo_setor": 0
+}
+
+### Motivo inexistente no ajuste (esperado: 404; estoque não deve ser alterado)
+POST {{baseUrl}}/EditarQuantidade
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "7890000987727",
+  "quantidade": 61,
+  "motivo": 999
 }
 
 ### Consultar movimentações (esperado: 200)
@@ -118,12 +169,38 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "codigo_barras": "7890000987727",
+  "codigo_barras": "0000000000000",
   "motivo": 9
 }
 
 
 
-### Excluir produto de teste sem movimentações (esperado: 200; cadastre antes um produto descartável sem movimentações)
-DELETE {{baseUrl}}/produto/7890000987728
+### Marcar produto de teste como excluído (esperado: 200; execute por último)
+PUT {{baseUrl}}/ExcluirProduto
+Content-Type: application/json
 Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "7890000987727",
+  "motivo": 9
+}
+
+### Produto excluído não aparece na consulta (esperado: 404)
+POST {{baseUrl}}/consultar
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "7890000987727"
+}
+
+### Produto excluído não pode ter o estoque ajustado (esperado: 404)
+POST {{baseUrl}}/EditarQuantidade
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "codigo_barras": "7890000987727",
+  "quantidade": 10,
+  "motivo": 2
+}
