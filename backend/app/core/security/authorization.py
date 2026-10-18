@@ -1,11 +1,14 @@
 """Define a verificação de permissões administrativas baseada no usuário do token."""
 
 from functools import wraps
+import logging
 
 from flask import jsonify
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 
 from app.core.database import get_db
+
+logger = logging.getLogger(__name__)
 
 
 def admin_required(view_function):
@@ -17,11 +20,15 @@ def admin_required(view_function):
         verify_jwt_in_request()
         drt = get_jwt_identity()
 
-        with get_db() as conn:
-            usuario = conn.execute(
-                "SELECT tipo_user FROM users WHERE drt = ?",
-                (drt,),
-            ).fetchone()
+        try:
+            with get_db() as conn:
+                usuario = conn.execute(
+                    "SELECT tipo_user FROM users WHERE drt = ?",
+                    (drt,),
+                ).fetchone()
+        except Exception:
+            logger.exception("erro ao consultar permissao do usuario")
+            return jsonify({"mensagem": "erro interno, tente novamente mais tarde"}), 500
 
         if usuario is None:
             return jsonify({"mensagem": "usuario do token nao existe"}), 401

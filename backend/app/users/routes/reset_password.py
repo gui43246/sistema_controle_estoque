@@ -1,5 +1,6 @@
 """Valida e redefine a senha de uma conta existente."""
 
+import logging
 from app.users import users_bp
 from app.core.database import get_db
 from flask import request, jsonify
@@ -7,7 +8,8 @@ from app.users.services import validar_senha
 from app.core.security.password_hash import criar_hash
 from app.core.security.authorization import admin_required
 from app import limiter
-import sqlite3
+
+logger = logging.getLogger(__name__)
 
 
 @users_bp.route("/reset_senha", methods=["POST"])
@@ -16,14 +18,14 @@ import sqlite3
 def resetar_senha():
     """Confere a nova senha e atualiza o hash da conta indicada."""
     requisicao = request.get_json(silent=True)
-    campos_obrigatorios = ["DRT", "nova_senha", "confirmar_senha"]
+    campos_obrigatorios = ["drt", "nova_senha", "confirmar_senha"]
 
     if not isinstance(requisicao, dict) or any(
         campo not in requisicao for campo in campos_obrigatorios
     ):
         return jsonify({"mensagem": "Verifique os campos enviados"}), 400
 
-    drt = requisicao["DRT"]
+    drt = requisicao["drt"]
     nova_senha = requisicao["nova_senha"]
     confirmar_senha = requisicao["confirmar_senha"]
 
@@ -53,5 +55,6 @@ def resetar_senha():
 
         return jsonify({"mensagem": "Senha alterada com sucesso"}), 200
 
-    except sqlite3.Error:
-        return jsonify({"mensagem": "Erro ao alterar a senha"}), 500
+    except Exception:
+        logger.exception("erro ao alterar senha")
+        return jsonify({"mensagem": "erro interno, tente novamente mais tarde"}), 500

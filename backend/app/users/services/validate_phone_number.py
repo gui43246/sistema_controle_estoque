@@ -43,6 +43,9 @@ def validar_telefone(numero: str, default_region: str = "BR") -> bool:
     >>> validar_telefone("12345")
     False  # Número inválido
     """
+    if not isinstance(numero, str):
+        return False
+
     apenas_digitos = re.sub(r"\D", "", numero)
 
     try:

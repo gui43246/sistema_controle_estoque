@@ -1,9 +1,8 @@
 """Valida nomes formados por letras e espaços."""
 
-import re
-
 def validar_name(name: str) -> bool:
-    """Retorna se o nome contém somente letras ASCII e espaços."""
+    """Retorna se cada parte do nome contém apenas letras Unicode."""
     if not isinstance(name, str):
         return False
-    return bool(re.match(r"^[A-Za-z ]+$", name))
+    partes = name.split()
+    return bool(partes) and all(parte.isalpha() for parte in partes)

@@ -1,18 +1,20 @@
 """Lista os usuários sem expor os hashes de senha."""
 
-import sqlite3
+import logging
 
 from flask import jsonify
-from flask_jwt_extended import jwt_required
 
 from app.core.database import get_db
 from app.users import users_bp
 from app import limiter
+from app.core.security.authorization import admin_required
+
+logger = logging.getLogger(__name__)
 
 
 @users_bp.route("/usuarios", methods=["GET"])
 @limiter.limit("30 per minute")
-@jwt_required()
+@admin_required
 def listar_usuarios():
     """Retorna os dados públicos dos usuários autenticados."""
     try:
@@ -26,5 +28,6 @@ def listar_usuarios():
             ).fetchall()
 
         return jsonify([dict(usuario) for usuario in usuarios]), 200
-    except sqlite3.Error:
-        return jsonify({"mensagem": "erro ao consultar usuarios"}), 500
+    except Exception:
+        logger.exception("erro ao consultar usuarios")
+        return jsonify({"mensagem": "erro interno, tente novamente mais tarde"}), 500

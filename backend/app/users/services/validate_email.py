@@ -41,7 +41,7 @@ def validar_email(email: str) -> bool:
         >>> validar_email("")
         False
     """
-    if not email:
+    if not isinstance(email, str) or not email:
         return False
 
     padrao = r'^(?!\.)[a-zA-Z0-9._%+-]+(?<!\.)@(?!-)(?!\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$'

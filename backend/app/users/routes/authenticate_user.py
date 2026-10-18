@@ -46,7 +46,7 @@ def login():
         logger.exception("erro ao consultar usuario no login")
         return jsonify({"mensagem": "erro interno, tente novamente mais tarde"}), 500
 
-    senha_armazenada = usuario["senha"] if usuario else HASH_FALSO
+    senha_armazenada = usuario["senha"] if usuario is not None else HASH_FALSO
     senha_confere = verifique_hash(senha_digitada, senha_armazenada)
 
     if usuario is None or not senha_confere:
