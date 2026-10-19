@@ -38,29 +38,12 @@ def isolated_db(tmp_path, monkeypatch):
             "INSERT INTO estoque (codigo_barras, quantidade) VALUES (?, 7)", (BARCODE,)
         )
 
-    def fake_get_db():
-        conn = sqlite3.connect(db_path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA foreign_keys = ON")
-        return conn
-
-    for module in (
-        create_product_module,
-        delete_product_module,
-        price_module,
-        sector_module,
-        stock_module,
-    ):
-        monkeypatch.setattr(module, "get_db", fake_get_db)
-
     return db_path
 
 
 def rows(db_path, query, parameters=()):
     """Reads rows from the isolated database without touching production data."""
-    with sqlite3.connect(db_path) as conn:
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA foreign_keys = ON")
+    with database.get_db() as conn:
         return conn.execute(query, parameters).fetchall()
 
 
@@ -183,3 +166,21 @@ def test_stock_update_rejects_invalid_quantities(isolated_db, quantity):
         stock_module.update_stock_quantity(BARCODE, quantity, USER_DRT, 4)
     assert rows(isolated_db, "SELECT quantidade FROM estoque WHERE codigo_barras = ?", (BARCODE,))[0]["quantidade"] == 7
     assert rows(isolated_db, "SELECT id FROM movimentacoes") == []
+
+
+def test_get_db_enables_foreign_keys(isolated_db):
+    """Application connections should enable FK enforcement by default."""
+    with database.get_db() as conn:
+        assert conn.execute("PRAGMA foreign_keys").fetchone()[0] == 1
+
+
+def test_get_db_rejects_movement_for_unknown_product(isolated_db):
+    """A movement cannot reference a product absent from the catalog."""
+    with database.get_db() as conn:
+        with pytest.raises(sqlite3.IntegrityError):
+            conn.execute(
+                """INSERT INTO movimentacoes
+                   (status, codigo_barras, motivo, usuario_drt)
+                   VALUES ('ajuste', 'produto-inexistente', 'teste', ?)""",
+                (USER_DRT,),
+            )

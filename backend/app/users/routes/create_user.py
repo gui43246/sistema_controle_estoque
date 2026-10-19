@@ -26,7 +26,7 @@ def create_user_route():
             new_user.insert(conn)
     except sqlite3.IntegrityError:
         return jsonify({"mensagem": "DRT, email ou telefone já cadastrados"}), 409
-    except Exception:
+    except sqlite3.Error:
         logger.exception("erro ao cadastrar usuário")
         return jsonify({"mensagem": "erro interno, tente novamente mais tarde"}), 500
 

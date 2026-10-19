@@ -29,11 +29,18 @@ py -m venv .venv
 py -m pip install -r backend\requirements.txt
 ```
 
-Crie um arquivo `.env` na raiz do projeto com as configurações abaixo. Troque a chave JWT por uma chave longa e aleatória antes de usar o sistema:
+Gere uma chave JWT aleatória com o comando abaixo e copie o valor exibido para
+`JWT_SECRET_KEY` no arquivo `.env` da raiz do projeto:
+
+```powershell
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
+O arquivo `.env` deve conter:
 
 ```dotenv
 CAMINHO_BANCO=banco.db
-JWT_SECRET_KEY=coloque-uma-chave-longa-e-aleatoria-aqui
+JWT_SECRET_KEY=<valor gerado pelo comando>
 ```
 
 O caminho de `CAMINHO_BANCO` é relativo à pasta `backend/app`. Com o valor `banco.db`, o arquivo será criado em `backend/app/banco.db`.
@@ -81,7 +88,7 @@ Envie o token nas rotas protegidas usando o cabeçalho:
 Authorization: Bearer <token>
 ```
 
-O token tem validade de cinco minutos. Rotas administrativas aceitam os tipos `adm`, `admin`, `user_adm` e `user_admin`. Usuários cadastrados pela API recebem o tipo `user_comum`.
+O token de acesso tem validade padrão de 60 minutos, configurável pela variável `JWT_ACCESS_MINUTES`. Rotas administrativas aceitam os tipos `adm`, `admin`, `user_adm` e `user_admin`. Usuários cadastrados pela API recebem o tipo `user_comum`.
 
 ## Rotas disponíveis
 
@@ -102,6 +109,11 @@ Todas as rotas ficam na raiz do endereço, sem prefixo `/api`. As requisições 
 | `GET` | `/usuarios` | Administrador | Lista usuários sem retornar hashes de senha. |
 | `POST` | `/reset_senha` | Administrador | Redefine a senha de um usuário. |
 | `DELETE` | `/usuarios/<drt>` | Administrador | Exclui usuário sem movimentações e impede autoexclusão. |
+
+As listagens `GET /estoque`, `GET /movimentacoes` e `GET /usuarios` aceitam os
+parâmetros `page` (padrão `1`) e `per_page` (padrão `50`, máximo `200`). As
+respostas têm o formato `{"items": [...], "page": 1, "per_page": 50, "total": 0}`.
+Uma página inválida retorna HTTP 400.
 
 ### Exemplos de requisição
 
@@ -213,7 +225,7 @@ As rotas de preço e exclusão usam motivos definidos no servidor. A rota de aju
 Execute a suíte a partir da pasta raiz do projeto:
 
 ```powershell
-py -m pytest -q
+py -m pytest -v --basetemp=.pytest-tmp
 ```
 
 O arquivo `pytest.ini` adiciona `backend` ao caminho de importação do pytest, permitindo que os testes encontrem os módulos `app`. Os testes automatizados usam bancos temporários; não é necessário apontar os testes para o banco de desenvolvimento.

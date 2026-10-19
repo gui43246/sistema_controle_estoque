@@ -1,6 +1,7 @@
 """Valida o ajuste de estoque e registra a movimentação associada."""
 
 import logging
+import sqlite3
 
 from flask import jsonify, request
 from flask_jwt_extended import get_jwt_identity
@@ -85,7 +86,7 @@ def adjust_stock_quantity_route():
         # um erro de configuração.
         logger.exception("motivo aceito não existe na tabela motivos")
         return jsonify({"mensagem": "erro inesperado, tente novamente mais tarde"}), 500
-    except Exception:
+    except sqlite3.Error:
         logger.exception("erro ao atualizar estoque")
         return jsonify({"mensagem": "erro inesperado, tente novamente mais tarde"}), 500
 

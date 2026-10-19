@@ -1,6 +1,7 @@
 """Exclui usuários sem movimentações associadas, preservando o histórico."""
 
 import logging
+import sqlite3
 
 from flask import jsonify
 from flask_jwt_extended import get_jwt_identity
@@ -45,6 +46,6 @@ def delete_user_route(drt):
             conn.execute("DELETE FROM users WHERE drt = ?", (drt,))
 
         return jsonify({"mensagem": "usuário excluído com sucesso"}), 200
-    except Exception:
+    except sqlite3.Error:
         logger.exception("erro ao excluir usuário")
         return jsonify({"mensagem": "erro interno, tente novamente mais tarde"}), 500

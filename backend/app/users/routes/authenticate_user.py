@@ -1,6 +1,7 @@
 """Valida as credenciais e emite um token de acesso."""
 
 import logging
+import sqlite3
 
 from flask import jsonify, request
 
@@ -42,7 +43,7 @@ def login():
             user = conn.execute(
                 "SELECT drt, senha FROM users WHERE drt = ?", (drt,)
             ).fetchone()
-    except Exception:
+    except sqlite3.Error:
         logger.exception("erro ao consultar usuário no login")
         return jsonify({"mensagem": "erro interno, tente novamente mais tarde"}), 500
 

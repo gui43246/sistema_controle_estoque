@@ -1,7 +1,9 @@
 """Testes isolados da autenticação e do cadastro de usuários."""
 
 import sqlite3
+import logging
 from contextlib import contextmanager
+from datetime import timedelta
 
 import pytest
 from flask_jwt_extended import create_access_token
@@ -172,3 +174,47 @@ def test_registration_rejects_regular_user(auth_client):
         headers={"Authorization": f"Bearer {token_for('123456789')}"},
     )
     assert response.status_code == 403
+
+
+def test_unexpected_login_error_is_generic_and_logged(auth_client, monkeypatch, caplog):
+    import app.users.routes.authenticate_user as authenticate_user
+
+    def unexpected_failure(password, stored_hash):
+        raise RuntimeError("password verifier internal detail")
+
+    monkeypatch.setattr(authenticate_user, "verify_password", unexpected_failure)
+    with caplog.at_level(logging.ERROR):
+        response = auth_client.post(
+            "/login", json={"drt": "000000000", "senha_digitada": "Senha123!"}
+        )
+
+    assert response.status_code == 500
+    assert response.get_json() == {"mensagem": "erro interno, tente novamente mais tarde"}
+    assert "password verifier internal detail" in caplog.text
+    assert "RuntimeError" in caplog.text
+
+
+def test_protected_route_rejects_missing_token(auth_client):
+    response = auth_client.get("/estoque")
+    assert response.status_code == 401
+    assert response.get_json() == {"error": "Token ausente"}
+
+
+def test_protected_route_rejects_malformed_token(auth_client):
+    response = auth_client.get(
+        "/estoque", headers={"Authorization": "Bearer not-a-valid-jwt"}
+    )
+    assert response.status_code == 401
+    assert response.get_json() == {"error": "Token inválido"}
+
+
+def test_protected_route_rejects_expired_token(auth_client):
+    with app.app_context():
+        expired = create_access_token(
+            identity="987654321", expires_delta=timedelta(seconds=-1)
+        )
+    response = auth_client.get(
+        "/estoque", headers={"Authorization": f"Bearer {expired}"}
+    )
+    assert response.status_code == 401
+    assert response.get_json() == {"error": "Token expirado"}

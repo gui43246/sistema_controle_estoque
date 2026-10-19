@@ -1,6 +1,7 @@
 """Valida e redefine a senha de uma conta existente."""
 
 import logging
+import sqlite3
 from app.users import users_bp
 from app.core.database import get_db
 from flask import request, jsonify
@@ -55,6 +56,6 @@ def reset_password_route():
 
         return jsonify({"mensagem": "Senha alterada com sucesso"}), 200
 
-    except Exception:
+    except sqlite3.Error:
         logger.exception("erro ao alterar senha")
         return jsonify({"mensagem": "erro interno, tente novamente mais tarde"}), 500

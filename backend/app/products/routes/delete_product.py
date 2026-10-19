@@ -1,6 +1,7 @@
 """Processa a exclusão lógica de um produto e registra a movimentação."""
 
 import logging
+import sqlite3
 
 from flask import jsonify, request
 from flask_jwt_extended.utils import get_jwt_identity
@@ -42,7 +43,7 @@ def delete_product_route():
         # O motivo é fixo no servidor: se não existe na tabela, é erro de configuração.
         logger.exception("motivo de exclusão não existe na tabela motivos")
         return jsonify({"mensagem": "erro inesperado, tente novamente mais tarde"}), 500
-    except Exception:
+    except sqlite3.Error:
         logger.exception("erro ao excluir produto")
         return jsonify({"mensagem": "erro inesperado, tente novamente mais tarde"}), 500
 

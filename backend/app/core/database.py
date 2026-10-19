@@ -10,6 +10,7 @@ load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, os.getenv("CAMINHO_BANCO"))
+CURRENT_SCHEMA_VERSION = 1
 
 
 
@@ -127,10 +128,23 @@ def init_db():
         )
     """)
 
+        schema_version = cursor.execute("PRAGMA user_version").fetchone()[0]
+        if schema_version < CURRENT_SCHEMA_VERSION:
+            movement_columns = {
+                row[1] for row in cursor.execute("PRAGMA table_info(movimentacoes)")
+            }
+            for column in ("old_valor", "new_valor"):
+                if column not in movement_columns:
+                    cursor.execute(
+                        f"ALTER TABLE movimentacoes ADD COLUMN {column} FLOAT DEFAULT 0"
+                    )
+            cursor.execute(f"PRAGMA user_version = {CURRENT_SCHEMA_VERSION}")
+
 
 def get_db():
     """Abre uma conexão SQLite com os resultados configurados como linhas nomeadas."""
     conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA foreign_keys = ON")
     conn.row_factory = sqlite3.Row
     return conn
 

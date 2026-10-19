@@ -1,6 +1,7 @@
 """Valida e altera o preço de um produto existente."""
 
 import logging
+import sqlite3
 import math
 
 from flask import jsonify, request
@@ -52,7 +53,7 @@ def update_product_price_route():
 
     except ProductNotFoundError:
         return jsonify({"mensagem": "produto não encontrado"}), 404
-    except Exception:
+    except sqlite3.Error:
         logger.exception("erro ao atualizar preço")
         return jsonify({"mensagem": "erro inesperado, tente novamente mais tarde"}), 500
 

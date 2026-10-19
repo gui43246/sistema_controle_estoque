@@ -2,6 +2,7 @@
 
 from functools import wraps
 import logging
+import sqlite3
 
 from flask import jsonify
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
@@ -26,7 +27,7 @@ def admin_required(view_function):
                     "SELECT tipo_user FROM users WHERE drt = ?",
                     (drt,),
                 ).fetchone()
-        except Exception:
+        except sqlite3.Error:
             logger.exception("erro ao consultar permissão do usuário")
             return jsonify({"mensagem": "erro interno, tente novamente mais tarde"}), 500
 

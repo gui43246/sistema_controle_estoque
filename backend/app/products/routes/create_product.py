@@ -51,7 +51,7 @@ def create_product_route():
 
     except sqlite3.IntegrityError:
         return jsonify({"mensagem": "produto já cadastrado"}), 409
-    except Exception:
+    except sqlite3.Error:
         current_app.logger.exception("erro ao cadastrar produto")
         return jsonify({"mensagem": "erro inesperado, tente novamente mais tarde"}), 500
 
