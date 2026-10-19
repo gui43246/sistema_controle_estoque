@@ -15,11 +15,11 @@ logger = logging.getLogger(__name__)
 @users_bp.route("/usuarios", methods=["GET"])
 @limiter.limit("30 per minute")
 @admin_required
-def listar_usuarios():
+def list_users_route():
     """Retorna os dados públicos dos usuários autenticados."""
     try:
         with get_db() as conn:
-            usuarios = conn.execute(
+            users = conn.execute(
                 """
                 SELECT id, drt, name, email, numero_telefone, tipo_user
                 FROM users
@@ -27,7 +27,7 @@ def listar_usuarios():
                 """
             ).fetchall()
 
-        return jsonify([dict(usuario) for usuario in usuarios]), 200
+        return jsonify([dict(user) for user in users]), 200
     except Exception:
-        logger.exception("erro ao consultar usuarios")
+        logger.exception("erro ao consultar usuários")
         return jsonify({"mensagem": "erro interno, tente novamente mais tarde"}), 500

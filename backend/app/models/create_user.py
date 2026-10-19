@@ -1,12 +1,12 @@
 """Define e valida os dados necessários para cadastrar um usuário."""
 
-from app.core.security.password_hash import criar_hash
+from app.core.security.password_hash import hash_password
 from app.users.services import (
-    validar_DRT,
-    validar_email,
-    validar_name,
-    validar_senha,
-    validar_telefone,
+    validate_drt,
+    validate_email,
+    validate_name,
+    validate_password,
+    validate_phone_number,
 )
 
 
@@ -73,24 +73,24 @@ class CreateUser:
         if any(not isinstance(value, str) for value in values):
             raise UserValidationError("todos os campos devem ser textos", 400)
 
-        drt_valid, message = validar_DRT(drt)
-        if not drt_valid:
+        drt_is_valid, message = validate_drt(drt)
+        if not drt_is_valid:
             raise UserValidationError(message, 400)
 
-        if not validar_name(name):
+        if not validate_name(name):
             raise UserValidationError("verifique o nome", 400)
 
-        if not validar_email(email):
-            raise UserValidationError("email invalido", 400)
+        if not validate_email(email):
+            raise UserValidationError("email inválido", 400)
 
-        if not validar_telefone(phone_number):
-            raise UserValidationError("verifique o numero de telefone", 400)
+        if not validate_phone_number(phone_number):
+            raise UserValidationError("verifique o número de telefone", 400)
 
-        password_valid, message = validar_senha(password)
+        password_valid, message = validate_password(password)
         if not password_valid:
             raise UserValidationError(message, 400)
 
-        password_hash = criar_hash(password)
+        password_hash = hash_password(password)
         return cls(drt, name, email.lower(), phone_number, password_hash)
 
     def to_database_values(self):
@@ -103,7 +103,7 @@ class CreateUser:
             self.password_hash,
         )
 
-    def inserir(self, conn):
+    def insert(self, conn):
         """Insere este usuário na conexão recebida, sem gerenciar a transação."""
         conn.execute(
             """INSERT INTO users(drt, name, email, numero_telefone, senha)

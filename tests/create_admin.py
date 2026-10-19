@@ -1,13 +1,13 @@
 from app.core.database import get_db
-from app.core.security.password_hash import criar_hash
+from app.core.security.password_hash import hash_password
 
 
-def criar_adm_text(
+def create_test_admin(
     drt="900000000",
-    nome="adm",
+    name="adm",
     email="adm@text.com",
-    numero="11991901212"
-    ,senha="Admteste123"
+    phone_number="11991901212"
+    ,password="Admteste123"
     
     ):
     
@@ -21,6 +21,6 @@ def criar_adm_text(
                        numero_telefone
                        ,senha,
                        tipo_user
-                       )VALUES (?,?,?,?,?,?)""",(drt,nome,email,numero,criar_hash(senha),"adm"))
+                       )VALUES (?,?,?,?,?,?)""",(drt,name,email,phone_number,hash_password(password),"adm"))
         
         return "ok, tudo pronto pra testes"

@@ -1,18 +1,18 @@
 """Cadastra um produto e registra a movimentação de entrada na mesma transação."""
 
 from app.core.database import get_db
-from app.models.movimentacao import Movimentacao
+from app.models.movement import StockMovement
 
-# id do motivo "cadastro de produto" na tabela motivos
-MOTIVO_CADASTRO = 1  
+# ID do motivo de cadastro do produto na tabela ``motivos``.
+REASON_CREATION = 1
 
 
-def cria_produto(usuario_drt, novo_produto):
+def create_product(user_drt, product):
     """Insere o produto e registra sua entrada de forma atômica.
 
     Args:
-        usuario_drt: Identificação do usuário responsável.
-        novo_produto: Instância de ``Produto`` já validada (via ``from_values``).
+        user_drt: DRT do usuário responsável.
+        product: Instância validada de ``Product``.
 
     Raises:
         ValueError: Se o motivo não existir.
@@ -20,12 +20,12 @@ def cria_produto(usuario_drt, novo_produto):
         sqlite3.Error: Para qualquer outra falha do banco.
     """
     with get_db() as conn:
-        novo_produto.inserir(conn)
-        Movimentacao.registrar(
+        product.insert(conn)
+        StockMovement.record(
             conn,
-            codigo_barras=novo_produto.codigo_barras,
-            quantidade=novo_produto.quantidade,
+            barcode=product.barcode,
+            quantity=product.quantity,
             status="entrada",
-            motivo=MOTIVO_CADASTRO,
-            usuario_drt=usuario_drt,
+            reason=REASON_CREATION,
+            user_drt=user_drt,
         )

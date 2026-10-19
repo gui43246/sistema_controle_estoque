@@ -1,89 +1,119 @@
-# Sistema de Controle de Estoque
+# Sistema de controle de estoque
 
-API REST para cadastro e consulta de produtos, controle de estoque, registro de movimentações e gerenciamento de usuários. O projeto usa Python, Flask, SQLite, autenticação JWT e permissões administrativas.
+Este projeto é uma API para controlar produtos, quantidades em estoque e movimentações. Também permite cadastrar usuários e controlar o acesso às operações.
+
+A API foi feita em Python com Flask. Os dados ficam em um banco SQLite. As rotas protegidas usam token JWT.
+
+## O que a aplicação faz
+
+- Cadastra produtos e cria o registro inicial de estoque.
+- Consulta produtos ativos e lista o estoque.
+- Altera quantidade, preço e setor de produtos.
+- Registra movimentações de entrada, ajuste e exclusão.
+- Cadastra, lista, redefine a senha e exclui usuários conforme as permissões.
 
 ## Requisitos
 
 - Python 3.10 ou superior.
 - `pip`.
 
-## Configuração
+Os comandos abaixo foram escritos para PowerShell e devem ser executados na pasta raiz do projeto.
 
-No diretório raiz do projeto, crie um arquivo `.env`:
+## Preparar o ambiente
+
+Crie e ative um ambiente virtual e instale as dependências:
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+py -m pip install -r backend\requirements.txt
+```
+
+Crie um arquivo `.env` na raiz do projeto com as configurações abaixo. Troque a chave JWT por uma chave longa e aleatória antes de usar o sistema:
 
 ```dotenv
 CAMINHO_BANCO=banco.db
-JWT_SECRET_KEY=troque-por-uma-chave-longa-e-aleatoria
+JWT_SECRET_KEY=coloque-uma-chave-longa-e-aleatoria-aqui
 ```
 
-`CAMINHO_BANCO` é relativo a `backend/app`. O banco será criado em `backend/app/banco.db`.
+O caminho de `CAMINHO_BANCO` é relativo à pasta `backend/app`. Com o valor `banco.db`, o arquivo será criado em `backend/app/banco.db`.
 
-### Instalação e inicialização pelo CMD
+## Criar o banco e os dados iniciais
 
-```cmd
-rem Execute estes comandos a partir da pasta raiz do projeto
-py -m venv .venv
-.venv\Scripts\activate.bat
-py -m pip install -r backend\requirements.txt
-set PYTHONPATH=%CD%\backend
+Ainda na pasta raiz, configure o caminho de importação e execute a inicialização:
+
+```powershell
+$env:PYTHONPATH = "$PWD\backend"
 py -m app.core.database
 ```
 
-A inicialização cria as tabelas, os setores e os motivos padrão, além de uma conta administrativa local para testes:
+Esse comando cria as tabelas, os setores e os motivos. Também cria uma conta administrativa local para facilitar testes manuais:
 
 - DRT: `900000000`
 - Senha: `Admteste123`
 
-Use essa conta somente em desenvolvimento. Troque a senha ou remova a conta antes de disponibilizar o sistema.
+Essa conta é somente para desenvolvimento. Troque a senha ou remova a conta antes de disponibilizar a aplicação para outras pessoas.
 
-### Iniciar a API
+## Iniciar a API
 
-Com o ambiente virtual ativado, na raiz do projeto:
+Na pasta raiz, com o ambiente virtual ativo e o arquivo `.env` configurado, execute:
 
-```cmd
+```powershell
 py backend\run.py
 ```
 
-A API inicia em `http://127.0.0.1:5000`. O servidor embutido do Flask está configurado em modo de depuração e deve ser usado apenas localmente.
+A API ficará disponível em `http://127.0.0.1:5000`. O servidor está configurado com `debug=True`, portanto deve ser usado apenas durante o desenvolvimento local.
 
-## Autenticação
+## Autenticação e permissões
 
-Envie `POST /login` com `drt` e `senha_digitada`. A resposta inclui um token JWT. Para rotas protegidas, envie:
+Para entrar, envie `POST /login` com o DRT e a senha. Se as credenciais estiverem corretas, a resposta inclui um token:
+
+```json
+{
+  "drt": "900000000",
+  "senha_digitada": "Admteste123"
+}
+```
+
+Envie o token nas rotas protegidas usando o cabeçalho:
 
 ```http
 Authorization: Bearer <token>
 ```
 
-As rotas administrativas aceitam usuários com tipo `adm`, `admin`, `user_adm` ou `user_admin`. Usuários cadastrados pela rota recebem o tipo `user_comum`.
+O token tem validade de cinco minutos. Rotas administrativas aceitam os tipos `adm`, `admin`, `user_adm` e `user_admin`. Usuários cadastrados pela API recebem o tipo `user_comum`.
 
-## Endpoints
+## Rotas disponíveis
 
-Todas as rotas ficam na raiz da API, sem prefixo `/api`. Os corpos das requisições são JSON.
+Todas as rotas ficam na raiz do endereço, sem prefixo `/api`. As requisições com dados devem enviar JSON.
 
-| Método | Rota | Acesso | Descrição |
+| Método | Rota | Acesso | Uso |
 |---|---|---|---|
-| `POST` | `/login` | Público | Autentica usuário e retorna JWT. |
-| `POST` | `/cadastrar` | Administrador | Cadastra produto com estoque inicial zero. |
-| `POST` | `/consultar` | Autenticado | Consulta produto pelo código de barras. |
-| `GET` | `/estoque` | Autenticado | Lista produtos ativos e seus saldos. |
-| `POST` | `/EditarQuantidade` | Administrador | Define quantidade e registra o motivo. |
-| `GET` | `/movimentacoes` | Autenticado | Lista o histórico de movimentações. |
-| `POST` | `/EditarValor` | Administrador | Altera o preço de um produto. |
-| `POST` | `/ajuste_setor_produto` | Administrador | Altera o setor de um produto. |
-| `PUT` | `/ExcluirProduto` | Administrador | Marca o produto como excluído e registra o motivo. |
-| `POST` | `/Cadastro_usuario` | Administrador | Cadastra usuário comum. |
-| `GET` | `/usuarios` | Autenticado | Lista usuários sem expor hashes de senha. |
+| `POST` | `/login` | Público | Confere DRT e senha e retorna um token. |
+| `POST` | `/cadastrar` | Administrador | Cadastra produto e cria estoque inicial zerado. |
+| `POST` | `/consultar` | Usuário autenticado | Consulta um produto ativo pelo código de barras. |
+| `GET` | `/estoque` | Usuário autenticado | Lista produtos ativos e suas quantidades. |
+| `POST` | `/EditarQuantidade` | Administrador | Define a quantidade em estoque e registra o motivo. |
+| `GET` | `/movimentacoes` | Usuário autenticado | Consulta o histórico de movimentações. |
+| `POST` | `/EditarValor` | Administrador | Altera o preço de um produto ativo. |
+| `POST` | `/ajuste_setor_produto` | Administrador | Altera o setor de um produto ativo. |
+| `PUT` | `/ExcluirProduto` | Administrador | Exclui logicamente um produto e zera seu estoque. |
+| `POST` | `/Cadastro_usuario` | Administrador | Cadastra um usuário comum. |
+| `GET` | `/usuarios` | Administrador | Lista usuários sem retornar hashes de senha. |
 | `POST` | `/reset_senha` | Administrador | Redefine a senha de um usuário. |
 | `DELETE` | `/usuarios/<drt>` | Administrador | Exclui usuário sem movimentações e impede autoexclusão. |
 
 ### Exemplos de requisição
 
-Cadastro de produto (requer token de administrador):
+Os exemplos abaixo mostram o corpo esperado. Para rotas protegidas, inclua também o cabeçalho `Authorization` com o token obtido no login.
+
+#### Cadastrar produto
+
+`setor_id` precisa corresponder a um setor existente. O produto é criado com quantidade zero.
 
 ```http
 POST /cadastrar
 Content-Type: application/json
-Authorization: Bearer <token>
 
 {
   "codigo_barras": "7891234567890",
@@ -93,9 +123,25 @@ Authorization: Bearer <token>
 }
 ```
 
-Ajuste de quantidade. `motivo` recebe o ID de um motivo cadastrado:
+#### Consultar produto
 
-```json
+```http
+POST /consultar
+Content-Type: application/json
+
+{
+  "codigo_barras": "7891234567890"
+}
+```
+
+#### Ajustar estoque
+
+O campo `motivo` é opcional. Quando não for enviado, a API usa o motivo de ajuste de estoque (ID 4). Os motivos aceitos por esta rota são devolução (3), ajuste de estoque (4), produto danificado (6), produto vencido (7) e ruptura (9).
+
+```http
+POST /EditarQuantidade
+Content-Type: application/json
+
 {
   "codigo_barras": "7891234567890",
   "quantidade": 25,
@@ -103,58 +149,90 @@ Ajuste de quantidade. `motivo` recebe o ID de um motivo cadastrado:
 }
 ```
 
-Exclusão lógica de produto. O registro permanece no banco com status `excluido`; ele deixa de aparecer na consulta e na listagem de estoque:
+#### Alterar preço
+
+```http
+POST /EditarValor
+Content-Type: application/json
+
+{
+  "codigo_barras": "7891234567890",
+  "novo_valor": 14.9
+}
+```
+
+#### Alterar setor
+
+`novo_setor` deve ser o ID de um setor existente.
+
+```http
+POST /ajuste_setor_produto
+Content-Type: application/json
+
+{
+  "codigo_barras": "7891234567890",
+  "novo_setor": 2
+}
+```
+
+#### Excluir produto
+
+A exclusão é lógica: o produto permanece no banco com status `excluido`, deixa de aparecer nas consultas de produtos ativos e tem o estoque zerado. O motivo de exclusão é definido pela API; não envie `motivo` no corpo.
 
 ```http
 PUT /ExcluirProduto
 Content-Type: application/json
-Authorization: Bearer <token>
 
 {
-  "codigo_barras": "7891234567890",
-  "motivo": 9
+  "codigo_barras": "7891234567890"
 }
 ```
 
-## Dados iniciais
+## Dados iniciais do banco
 
-A inicialização cria oito setores e nove motivos. Os IDs dos motivos são inseridos nesta ordem:
+A inicialização cadastra oito setores e onze motivos. Os IDs são criados na ordem abaixo:
 
-1. cadastro de item
-2. Compra de produto
-3. Devolução
-4. Ajuste de estoque
-5. Produto danificado
-6. Produto vencido
-7. Recepção
-8. Ruptura
-9. exclusão
+| ID | Motivo |
+|---:|---|
+| 1 | cadastro de item |
+| 2 | Compra de produto |
+| 3 | Devolução |
+| 4 | Ajuste de estoque |
+| 5 | valor ajustado |
+| 6 | Produto danificado |
+| 7 | Produto vencido |
+| 8 | Recepção |
+| 9 | Ruptura |
+| 10 | exclusão |
+| 11 | Venda |
 
-## Estrutura do projeto
+As rotas de preço e exclusão usam motivos definidos no servidor. A rota de ajuste de estoque aceita apenas os IDs indicados no exemplo acima.
+
+## Executar os testes
+
+Execute a suíte a partir da pasta raiz do projeto:
+
+```powershell
+py -m pytest -q
+```
+
+O arquivo `pytest.ini` adiciona `backend` ao caminho de importação do pytest, permitindo que os testes encontrem os módulos `app`. Os testes automatizados usam bancos temporários; não é necessário apontar os testes para o banco de desenvolvimento.
+
+Os arquivos `.rest` em `tests/rest` são exemplos para executar requisições manualmente em uma extensão de cliente REST. Eles não fazem parte da suíte automática.
+
+## Organização das pastas
 
 ```text
 backend/
 ├── app/
-│   ├── core/           # Banco de dados e segurança
-│   ├── models/         # Produtos, usuários e movimentações
-│   ├── products/       # Rotas e serviços de produtos/estoque
-│   ├── users/          # Rotas e validações de usuários
-│   └── utils/          # Logger
+│   ├── core/       # Configuração do banco e segurança
+│   ├── models/     # Modelos de produto, usuário e movimentação
+│   ├── products/   # Rotas e serviços de produtos e estoque
+│   ├── users/      # Rotas e validações de usuários
+│   └── utils/      # Utilitários da aplicação
 ├── requirements.txt
 └── run.py
 tests/
-├── rest/               # Requisições manuais para cliente REST
-└── test_*.py           # Testes automatizados
+├── rest/           # Exemplos de requisições manuais
+└── test_*.py       # Testes automatizados
 ```
-
-## Testes e logs
-
-Instale as dependências e execute os testes automatizados a partir da raiz:
-
-```cmd
-py -m pytest
-```
-
-Os arquivos `.rest` em `tests/rest` contêm exemplos para enviar individualmente por um cliente REST. O servidor Flask mostra as requisições recebidas no console. O utilitário em `backend/app/utils/logger.py` grava mensagens quando chamado; os testes automatizados usam esse logger para registrar seus resultados em `logs/app.log`.
-
-Para direcionar o logger a outro arquivo, defina `ESTOQUE_LOG_FILE` antes de iniciar os testes.

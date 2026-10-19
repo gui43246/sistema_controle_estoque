@@ -3,31 +3,31 @@
 from flask import jsonify, request
 from flask_jwt_extended import jwt_required
 
-from app.products import produtos_bp
-from app.products.services.find_product import buscar
+from app.products import products_bp
+from app.products.services.find_product import find_product
 from app import limiter
 
 
-@produtos_bp.route("/consultar", methods=["POST"])
+@products_bp.route("/consultar", methods=["POST"])
 @limiter.limit("30 per minute")
 @jwt_required()
-def consultar_produto_por_codigo():
+def find_product_route():
     """Valida o JSON e retorna os dados do produto encontrado pelo serviço de busca."""
-    dados = request.get_json(silent=True)
-    if not isinstance(dados, dict):
-        return jsonify({"mensagem": "envie um objeto JSON valido"}), 400
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"mensagem": "envie um objeto JSON válido"}), 400
 
-    codigo_barras = dados.get("codigo_barras")
-    if not isinstance(codigo_barras, str) or not codigo_barras.strip():
-        return jsonify({"mensagem": "codigo de barras invalido"}), 422
+    barcode = payload.get("codigo_barras")
+    if not isinstance(barcode, str) or not barcode.strip():
+        return jsonify({"mensagem": "código de barras inválido"}), 422
 
-    produto = buscar(codigo_barras, config="dados")
-    if produto is None:
-        produto_existe = buscar(codigo_barras, config="status")
-        if produto_existe is False:
-            return jsonify({"mensagem": "produto nao encontrado"}), 404
-        if produto_existe is None:
+    product = find_product(barcode, config="data")
+    if product is None:
+        product_exists = find_product(barcode, config="status")
+        if product_exists is False:
+            return jsonify({"mensagem": "produto não encontrado"}), 404
+        if product_exists is None:
             return jsonify({"mensagem": "erro ao consultar produto"}), 500
         return jsonify({"mensagem": "erro ao consultar produto"}), 500
 
-    return jsonify(produto), 200
+    return jsonify(product), 200

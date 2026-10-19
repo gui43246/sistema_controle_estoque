@@ -3,14 +3,14 @@
 from flask import Flask,request,jsonify
 import sqlite3
 from app.core.database import get_db
-from app.products import produtos_bp
+from app.products import products_bp
 from flask_jwt_extended import jwt_required
 from app import limiter
 
-@produtos_bp.route("/estoque",methods=["GET"])
+@products_bp.route("/estoque",methods=["GET"])
 @limiter.limit("30 per minute")
 @jwt_required()
-def  listar_estoque():
+def  list_inventory_route():
     
     """Retorna uma lista JSON dos produtos com saldo de estoque."""
     try:
@@ -28,16 +28,16 @@ def  listar_estoque():
                            JOIN estoque e ON p.codigo_barras = e.codigo_barras
                            WHERE p.status = 'ativo'
                            """)
-            produtos = cursor.fetchall()
-            lista =[]
-            for p in produtos:
-                lista.append({
+            products = cursor.fetchall()
+            items =[]
+            for p in products:
+                items.append({
                    "codigo_barras":p["codigo_barras"],
                    "nome_produto": p["nome_produto"],
                    "valor_prod": p["valor_prod"],
                    "setor_id": p["setor_id"],
                     "quantidade": p["quantidade"]
                 })
-            return jsonify(lista)
+            return jsonify(items)
     except Exception as e:
         return  jsonify({"mensagem":f"erro: {e}"}),500

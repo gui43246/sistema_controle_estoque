@@ -3,35 +3,35 @@
 from app.core.database import get_db
 
 
-def buscar(codigo_barras, config="status") -> bool | dict | None:
+def find_product(barcode, config="status") -> bool | dict | None:
     """Consulta um produto pelo código de barras.
 
     Args:
-        codigo_barras: Código de barras do produto.
-        config: ``"status"`` (padrão) ou ``"dados"``.
+        barcode: Código de barras do produto.
+        config: ``"status"`` (padrão) ou ``"data"``.
 
     Returns:
         - ``config="status"``: ``True`` se o produto existe e está ativo;
           ``False`` se não existe ou se foi excluído.
-        - ``config="dados"``: ``dict`` com as colunas do produto ativo, ou
+        - ``config="data"``: ``dict`` com as colunas do produto ativo, ou
           ``None`` se não for encontrado.
 
     Raises:
-        ValueError: Se ``config`` for diferente de ``"status"`` e ``"dados"``.
+        ValueError: Se ``config`` for diferente de ``"status"`` e ``"data"``.
         sqlite3.Error: Para falhas do banco.
     """
-    if config not in ("status", "dados"):
-        raise ValueError("config deve ser 'status' ou 'dados'")
+    if config not in ("status", "data"):
+        raise ValueError("config deve ser 'status' ou 'data'")
 
     with get_db() as conn:
         if config == "status":
-            resultado = conn.execute(
+            result = conn.execute(
                 "SELECT status FROM Produtos_cadastrados WHERE codigo_barras = ?",
-                (codigo_barras,),
+                (barcode,),
             ).fetchone()
-            return resultado is not None and resultado["status"] == "ativo"
+            return result is not None and result["status"] == "ativo"
 
-        produto = conn.execute(
+        product = conn.execute(
             """
             SELECT
                 p.codigo_barras,
@@ -45,6 +45,6 @@ def buscar(codigo_barras, config="status") -> bool | dict | None:
             LEFT JOIN estoque e ON e.codigo_barras = p.codigo_barras
             WHERE p.codigo_barras = ? AND p.status = 'ativo'
             """,
-            (codigo_barras,),
+            (barcode,),
         ).fetchone()
-        return dict(produto) if produto is not None else None
+        return dict(product) if product is not None else None

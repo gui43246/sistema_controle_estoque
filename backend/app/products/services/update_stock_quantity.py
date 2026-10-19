@@ -1,25 +1,25 @@
 """Persiste alterações simples de quantidade em estoque."""
 
 from app.core.database import get_db
-from app.models.movimentacao import EstoqueNaoEncontradoError, Movimentacao
+from app.models.movement import StockNotFoundError, StockMovement
 
 
-def update_stock_quantity(barcode, quantity, usuario_drt, motivo):
+def update_stock_quantity(barcode, quantity, user_drt, reason):
     """Atualiza a quantidade em estoque e registra o ajuste na mesma transação.
 
     Args:
         barcode: Código de barras do produto.
         quantity: Nova quantidade total em estoque (inteiro, zero ou mais).
-        usuario_drt: DRT do usuário responsável.
-        motivo: Id do motivo na tabela ``motivos``.
+        user_drt: DRT do usuário responsável.
+        reason: ID do motivo na tabela ``motivos``.
 
     Raises:
         ValueError: Se a quantidade for inválida ou o motivo não existir.
-        EstoqueNaoEncontradoError: Se o item não existir no estoque.
+        StockNotFoundError: Se o item não existir no estoque.
         sqlite3.Error: Para qualquer falha do banco.
     """
     if isinstance(quantity, bool) or not isinstance(quantity, int) or quantity < 0:
-        raise ValueError("quantidade invalida")
+        raise ValueError("quantidade inválida")
 
     with get_db() as conn:
         cursor = conn.execute(
@@ -27,13 +27,13 @@ def update_stock_quantity(barcode, quantity, usuario_drt, motivo):
             (quantity, barcode),
         )
         if cursor.rowcount == 0:
-            raise EstoqueNaoEncontradoError("estoque nao encontrado")
+            raise StockNotFoundError("estoque não encontrado")
 
-        Movimentacao.registrar(
+        StockMovement.record(
             conn,
-            codigo_barras=barcode,
+            barcode=barcode,
             status="ajuste",
-            motivo=motivo,
-            usuario_drt=usuario_drt,
-            quantidade=quantity,
+            reason=reason,
+            user_drt=user_drt,
+            quantity=quantity,
         )

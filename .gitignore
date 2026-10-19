@@ -1,5 +1,11 @@
 
 .env
+.env.*
+!.env.example
+
+# Ambientes virtuais Python
+.venv/
+venv/
 
 # Logs
 *.log
@@ -9,6 +15,8 @@
 .idea/
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.pytest-tmp/
 .json
 *.db
 *.sqlite

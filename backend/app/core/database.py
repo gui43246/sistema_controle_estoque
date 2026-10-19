@@ -12,16 +12,20 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, os.getenv("CAMINHO_BANCO"))
 
 
+
+
 def init_db():
     """Cria as tabelas necessárias e insere os setores e motivos padrão."""
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
+        cursor.execute("PRAGMA foreign_keys = ON")
+        cursor.execute("PRAGMA journal_mode =WAL")
 
         cursor.execute("""CREATE TABLE IF NOT EXISTS setor(
             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             nome_setor TEXT NOT NULL UNIQUE)""")
 
-        setores = [
+        sectors = [
         ("Perfumaria",),
         ("Drogaria",),
         ("Mercearia seca",),
@@ -32,17 +36,17 @@ def init_db():
         ("Açougue",),
         ]
         # Também evita duplicatas em bancos antigos, cuja tabela ainda não tem UNIQUE.
-        for (nome_setor,) in setores:
+        for (sector_name,) in sectors:
             cursor.execute(
                 "SELECT 1 FROM setor WHERE nome_setor = ? LIMIT 1",
-                (nome_setor,),
+                (sector_name,),
             )
             if cursor.fetchone() is None:
                 cursor.execute(
                     "INSERT INTO setor (nome_setor) VALUES (?)",
-                    (nome_setor,),
+                    (sector_name,),
                     
-        #cria a tabela aonde ficam os produtos cadastrados
+        # Cria a tabela que armazena os produtos cadastrados.
                 )
         cursor.execute("""CREATE TABLE IF NOT EXISTS Produtos_cadastrados(
             codigo_barras TEXT PRIMARY KEY NOT NULL,
@@ -52,7 +56,7 @@ def init_db():
             status TEST NOT NULL DEFAULT "ativo" CHECK(status IN ("ativo","excluido")),
             FOREIGN KEY (setor_id) REFERENCES setor(id))""")
 
-        #cria uma tabela chamada estoque que fica responsavel por guardar quantidade de produtos no estoque
+        # Cria a tabela que armazena as quantidades em estoque.
         cursor.execute(
             """CREATE TABLE IF NOT EXISTS estoque(
             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -61,7 +65,7 @@ def init_db():
             FOREIGN KEY (codigo_barras) REFERENCES Produtos_cadastrados(codigo_barras))"""
         )
 
-        #cria uma tabela chamada usuarios com dados do usuario e tipo de user que vai ser responsavel por muitas ações do projeto
+        # Cria a tabela de usuários e seus dados de acesso.
     
         cursor.execute("""
                        CREATE TABLE IF NOT EXISTS users(
@@ -75,7 +79,7 @@ def init_db():
                            )
                        """)
        
-        #cria a tabela motivos que a unica resposabilidade é guardar um texto que vai ser usado pra registrar uma movimentação
+        # Cria a tabela de motivos usados no histórico de movimentações.
         cursor.execute("""
     CREATE TABLE IF NOT EXISTS motivos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,7 +87,7 @@ def init_db():
     )
 """)
         
-        #insere os textos na tabela motivos 
+        # Insere os motivos padrão.
 
         cursor.executemany(
             "INSERT OR IGNORE INTO motivos (descricao) VALUES (?)",
@@ -102,7 +106,7 @@ def init_db():
     ],
         )
         
-        #cria uma tabela de movimentações que é responsavel por guardar um historico de ações 
+        # Cria a tabela que registra o histórico de ações.
         
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS movimentacoes (
@@ -131,21 +135,21 @@ def get_db():
     return conn
 
 
-def criar_adm_text(
+def create_test_admin(
     drt="900000000",
-    nome="adm",
+    name="adm",
     email="adm@text.com",
-    numero="11991901212",
-    senha="Admteste123",
+    phone_number="11991901212",
+    password="Admteste123",
 ):
     """Cria a conta de administrador usada nos testes, se ainda não existir."""
-    senha_hash = bcrypt.hashpw(senha.encode("utf-8"), bcrypt.gensalt(rounds=12))
+    password_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(rounds=12))
     with get_db() as conn:
         conn.execute(
             """INSERT OR IGNORE INTO users
                (drt, name, email, numero_telefone, senha, tipo_user)
                VALUES (?, ?, ?, ?, ?, ?)""",
-            (drt, nome, email, numero, senha_hash, "adm"),
+            (drt, name, email, phone_number, password_hash, "adm"),
         )
     return "ok, tudo pronto pra testes"
 
@@ -153,4 +157,4 @@ def criar_adm_text(
 if __name__ == "__main__":
     init_db()
     print("Banco de dados inicializado com sucesso!")
-    print(criar_adm_text())
+    print(create_test_admin())

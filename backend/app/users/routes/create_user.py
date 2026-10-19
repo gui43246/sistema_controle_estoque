@@ -13,23 +13,23 @@ logger = logging.getLogger(__name__)
 @users_bp.route("/Cadastro_usuario", methods=["POST"])
 @limiter.limit("10 per minute")
 @admin_required
-def cadastrar_usuario():
+def create_user_route():
     """Cria a conta a partir dos dados preparados pela classe de domínio."""
-    dados = request.get_json(silent=True)
+    payload = request.get_json(silent=True)
     try:
-        new_user = CreateUser.from_payload(dados)
+        new_user = CreateUser.from_payload(payload)
     except UserValidationError as error:
         return jsonify({"mensagem": str(error)}), error.status_code
     
     try:
         with get_db() as conn:
-            new_user.inserir(conn)
+            new_user.insert(conn)
     except sqlite3.IntegrityError:
-        return jsonify({"mensagem": "DRT, email ou telefone ja cadastrados"}), 409
+        return jsonify({"mensagem": "DRT, email ou telefone já cadastrados"}), 409
     except Exception:
-        logger.exception("erro ao cadastrar usuario")
+        logger.exception("erro ao cadastrar usuário")
         return jsonify({"mensagem": "erro interno, tente novamente mais tarde"}), 500
 
-    return jsonify({"mensagem": "ok usuario cadastrado"}), 201
+    return jsonify({"mensagem": "ok usuário cadastrado"}), 201
 
 

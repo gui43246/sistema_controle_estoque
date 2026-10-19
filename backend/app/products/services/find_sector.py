@@ -3,7 +3,7 @@
 from app.core.database import get_db
 
 
-def buscar_setor(id: int) -> str | None:
+def find_sector(sector_id: int) -> str | None:
     """Retorna o nome do setor ou None quando o identificador não existe."""
     with get_db() as conn:
         cursor = conn.cursor()
@@ -11,7 +11,7 @@ def buscar_setor(id: int) -> str | None:
             """
                        SELECT nome_setor from setor
                        Where id=?""",
-            (id,),
+            (sector_id,),
         )
-        resultado = cursor.fetchone()
-        return resultado["nome_setor"] if resultado is not None else None
+        result = cursor.fetchone()
+        return result["nome_setor"] if result is not None else None

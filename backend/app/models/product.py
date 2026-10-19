@@ -6,84 +6,84 @@ import sqlite3
 from app.core.database import get_db
 
 
-class Produto:
+class Product:
     """Representa os dados e as regras de criação de um produto do estoque.
 
     Attributes:
-        codigo_barras: Identificador único do produto.
-        nome_produto: Nome ou descrição do produto.
-        valor_produto: Preço unitário normalizado como ``float``.
-        setor: Identificador numérico do setor associado ao produto.
-        quantidade: Quantidade inicial ou atual em estoque; começa em zero
+        barcode: Identificador único do produto.
+        name: Nome ou descrição do produto.
+        price: Preço unitário normalizado como ``float``.
+        sector_id: Identificador numérico do setor associado ao produto.
+        quantity: Quantidade inicial ou atual em estoque; começa em zero
             quando não é informada.
 
     Use :meth:`from_values` para criar um produto a partir de valores externos.
     Esse método valida e normaliza os campos antes de instanciar a classe.
-    :meth:`commit` persiste o produto e seu registro inicial de estoque.
+    :meth:`insert` persiste o produto e seu registro inicial de estoque.
     """
 
     @classmethod
-    def from_values(cls, codigo_barras, nome_produto, valor_produto, setor):
+    def from_values(cls, barcode, name, price, sector_id):
         """Valida e normaliza os dados recebidos antes de criar um produto.
 
         Args:
-            codigo_barras: Código de barras não vazio.
-            nome_produto: Nome não vazio.
-            valor_produto: Valor convertido para ``float``; deve ser finito e
+            barcode: Código de barras não vazio.
+            name: Nome não vazio.
+            price: Valor convertido para ``float``; deve ser finito e
                 maior ou igual a zero. Valores booleanos não são aceitos.
-            setor: Identificador convertido para ``int`` dentro do intervalo
+            sector_id: Identificador convertido para ``int`` dentro do intervalo
                 permitido pelo SQLite. Valores booleanos não são aceitos.
 
         Returns:
-            Uma instância de ``Produto`` com preço e setor normalizados.
+            Uma instância de ``Product`` com preço e setor normalizados.
 
         Raises:
             ValueError: Quando um campo é inválido. A mensagem é devolvida em
                 português e pode ser usada diretamente na resposta da API.
         """
-        if not isinstance(codigo_barras, str) or not codigo_barras.strip():
-            raise ValueError("codigo de barras invalido")
-        if not isinstance(nome_produto, str) or not nome_produto.strip():
-            raise ValueError("nome do produto invalido")
-        if isinstance(valor_produto, bool) or isinstance(setor, bool):
-            raise ValueError("Campo invalido: valor_prod ou setor_id")
-        if isinstance(setor, float) and not setor.is_integer():
-            raise ValueError("setor_id invalido")
+        if not isinstance(barcode, str) or not barcode.strip():
+            raise ValueError("código de barras inválido")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("nome do produto inválido")
+        if isinstance(price, bool) or isinstance(sector_id, bool):
+            raise ValueError("Campo inválido: valor_prod ou setor_id")
+        if isinstance(sector_id, float) and not sector_id.is_integer():
+            raise ValueError("setor_id inválido")
 
         try:
-            valor_produto = float(valor_produto)
-            setor = int(setor)
+            price = float(price)
+            sector_id = int(sector_id)
         except (ValueError, TypeError, OverflowError) as error:
-            raise ValueError("Campo invalido: valor_prod ou setor_id") from error
+            raise ValueError("Campo inválido: valor_prod ou setor_id") from error
 
-        if setor < 1 or setor > 9_223_372_036_854_775_807:
-            raise ValueError("setor_id invalido")
-        if not math.isfinite(valor_produto) or valor_produto < 0:
-            raise ValueError("valor do produto invalido")
+        if sector_id < 1 or sector_id > 9_223_372_036_854_775_807:
+            raise ValueError("setor_id inválido")
+        if not math.isfinite(price) or price < 0:
+            raise ValueError("valor do produto inválido")
 
-        return cls(codigo_barras, nome_produto, valor_produto, setor)
+        return cls(barcode, name, price, sector_id)
 
-    def __init__(self, codigo_barras, nome_produto, valor_produto, setor, quantidade=0):
+    def __init__(self, barcode, name, price, sector_id, quantity=0):
         """Armazena os campos de uma instância de produto.
 
         Args:
-            codigo_barras: Identificador do produto.
-            nome_produto: Nome ou descrição do produto.
-            valor_produto: Preço unitário.
-            setor: Identificador do setor.
-            quantidade: Quantidade em estoque, padrão ``0``.
+            barcode: Identificador do produto.
+            name: Nome ou descrição do produto.
+            price: Preço unitário.
+            sector_id: Identificador do setor.
+            quantity: Quantidade em estoque, padrão ``0``.
 
         Note:
             Este inicializador apenas armazena os valores. Para validar e
-            normalizar dados externos, use ``Produto.from_values``.
+            normalizar dados externos, use ``Product.from_values``.
         """
-        self.codigo_barras = codigo_barras
-        self.nome_produto = nome_produto
-        self.valor_produto = valor_produto
-        self.setor = setor
-        self.quantidade = quantidade
+        self.barcode = barcode
+        self.name = name
+        self.price = price
+        self.sector_id = sector_id
+        self.quantity = quantity
 
-    def inserir(self, conn):
+    def insert(self, conn):
         """Insere o produto e seu registro de estoque inicial.
 
         Não faz commit: quem abriu a transação é responsável por isso.
@@ -96,13 +96,13 @@ class Produto:
             """INSERT INTO Produtos_cadastrados(
                     codigo_barras, nome_produto, valor_prod, setor_id
                 ) VALUES (?, ?, ?, ?)""",
-            (self.codigo_barras, self.nome_produto, self.valor_produto, self.setor),
+            (self.barcode, self.name, self.price, self.sector_id),
         )
         conn.execute(
             "INSERT INTO estoque(codigo_barras) VALUES (?)",
-            (self.codigo_barras,),
+            (self.barcode,),
         )
         
         
-class ProdutoNaoEncontradoError(LookupError):
+class ProductNotFoundError(LookupError):
     """O código de barras informado não existe ou não está ativo."""

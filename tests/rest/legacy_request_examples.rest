@@ -1,6 +1,6 @@
 # Coleção antiga substituída pelos arquivos abaixo.
 # Eles usam login nomeado e capturam o token automaticamente:
-# - testes_login.rest
-# - testes_usuarios.rest
-# - testes_produtos.rest
+# - login_requests.rest
+# - user_requests.rest
+# - product_requests.rest
 # Evite copiar tokens manualmente ou reutilizar tokens expirados.

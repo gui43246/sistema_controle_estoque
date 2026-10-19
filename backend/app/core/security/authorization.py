@@ -22,21 +22,21 @@ def admin_required(view_function):
 
         try:
             with get_db() as conn:
-                usuario = conn.execute(
+                user = conn.execute(
                     "SELECT tipo_user FROM users WHERE drt = ?",
                     (drt,),
                 ).fetchone()
         except Exception:
-            logger.exception("erro ao consultar permissao do usuario")
+            logger.exception("erro ao consultar permissão do usuário")
             return jsonify({"mensagem": "erro interno, tente novamente mais tarde"}), 500
 
-        if usuario is None:
-            return jsonify({"mensagem": "usuario do token nao existe"}), 401
-        tipo_usuario = (usuario["tipo_user"] or "").strip().lower()
-        if tipo_usuario not in {"adm", "admin", "user_adm", "user_admin"}:
+        if user is None:
+            return jsonify({"mensagem": "usuário do token não existe"}), 401
+        user_type = (user["tipo_user"] or "").strip().lower()
+        if user_type not in {"adm", "admin", "user_adm", "user_admin"}:
             return (
                 jsonify(
-                    {"mensagem": "usuario sem permicao "}
+                    {"mensagem": "usuário sem permissão "}
                 ),
                 403,
             )

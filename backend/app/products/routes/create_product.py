@@ -6,51 +6,51 @@ from flask import current_app, jsonify, request
 from flask_jwt_extended.utils import get_jwt_identity
 from app import limiter
 from app.core.security.authorization import admin_required
-from app.models.product import Produto
-from app.products import produtos_bp
-from app.products.services.create_product import cria_produto  # ajuste o caminho
-from app.products.services.find_product import buscar
-from app.products.services.sector_service import buscar_setor
+from app.models.product import Product
+from app.products import products_bp
+from app.products.services.create_product import create_product
+from app.products.services.find_product import find_product
+from app.products.services.find_sector import find_sector
 
-CAMPOS_OBRIGATORIOS = ("codigo_barras", "nome_produto", "valor_prod", "setor_id")
+REQUIRED_FIELDS = ("codigo_barras", "nome_produto", "valor_prod", "setor_id")
 
 
-@produtos_bp.route("/cadastrar", methods=["POST"])
+@products_bp.route("/cadastrar", methods=["POST"])
 @limiter.limit("30 per minute")
 @admin_required
-def cadastrar_produto():
+def create_product_route():
     """Valida os campos e cadastra o produto, seu estoque e a movimentação."""
-    usuario_logado = get_jwt_identity()
+    logged_in_drt = get_jwt_identity()
 
-    dados = request.get_json(silent=True)
-    if not isinstance(dados, dict):
-        return jsonify({"mensagem": "envie um objeto JSON valido"}), 400
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"mensagem": "envie um objeto JSON válido"}), 400
 
-    faltando = [campo for campo in CAMPOS_OBRIGATORIOS if campo not in dados]
-    if faltando:
-        return jsonify({"mensagem": f"faltando o campo {', '.join(faltando)}"}), 400
+    missing_fields = [field for field in REQUIRED_FIELDS if field not in payload]
+    if missing_fields:
+        return jsonify({"mensagem": f"faltando o campo {', '.join(missing_fields)}"}), 400
 
     try:
-        novo_produto = Produto.from_values(
-            codigo_barras=dados["codigo_barras"],
-            nome_produto=dados["nome_produto"],
-            valor_produto=dados["valor_prod"],
-            setor=dados["setor_id"],
+        product = Product.from_values(
+            barcode=payload["codigo_barras"],
+            name=payload["nome_produto"],
+            price=payload["valor_prod"],
+            sector_id=payload["setor_id"],
         )
     except ValueError as error:
         return jsonify({"mensagem": str(error)}), 422
 
     try:
-        if buscar_setor(novo_produto.setor) is None:
-            return jsonify({"mensagem": "setor nao encontrado"}), 404
+        if find_sector(product.sector_id) is None:
+            return jsonify({"mensagem": "setor não encontrado"}), 404
 
-        if buscar(novo_produto.codigo_barras):
-            return jsonify({"mensagem": "produto ja cadastrado"}), 409
+        if find_product(product.barcode):
+            return jsonify({"mensagem": "produto já cadastrado"}), 409
 
-        cria_produto(usuario_logado, novo_produto)
+        create_product(logged_in_drt, product)
 
     except sqlite3.IntegrityError:
-        return jsonify({"mensagem": "produto ja cadastrado"}), 409
+        return jsonify({"mensagem": "produto já cadastrado"}), 409
     except Exception:
         current_app.logger.exception("erro ao cadastrar produto")
         return jsonify({"mensagem": "erro inesperado, tente novamente mais tarde"}), 500

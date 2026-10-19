@@ -1,0 +1,2 @@
+# Testes de produtos, estoque e movimentações estão em product_requests.rest.
+# O token é capturado automaticamente a partir do login nomeado.

@@ -2,7 +2,7 @@
 
 import re
 
-provedores_email = [
+allowed_email_providers = [
     "gmail.com",
     "outlook.com",
     "hotmail.com",
@@ -13,7 +13,7 @@ provedores_email = [
 ]
 
 
-def validar_email(email: str) -> bool:
+def validate_email(email: str) -> bool:
     """Valida se uma string é um e-mail com formato correto e provedor permitido.
 
     A validação ocorre em duas etapas:
@@ -21,34 +21,34 @@ def validar_email(email: str) -> bool:
        casos como ponto duplicado, ponto/hífen logo após o '@', ou parte
        local iniciando/terminando com ponto.
     2. Verifica se o domínio do e-mail está na lista de provedores
-       permitidos (`provedores_email`).
+       permitidos (`allowed_email_providers`).
 
     Args:
-        email (str): Endereço de e-mail a ser validado.
+        email: Endereço de e-mail a ser validado.
 
     Returns:
-        bool: True se o e-mail tiver formato válido E o domínio estiver
-            na lista de provedores permitidos. False caso contrário,
+        ``True`` se o e-mail tiver formato válido e o domínio estiver
+            na lista de provedores permitidos; caso contrário, ``False``,
             incluindo quando `email` for vazio, None ou não for string.
 
     Examples:
-        >>> validar_email("usuario@gmail.com")
+        >>> validate_email("usuario@gmail.com")
         True
-        >>> validar_email("usuario@gmail.br")
+        >>> validate_email("usuario@gmail.br")
         False
-        >>> validar_email("usuario@empresaxyz.com")
+        >>> validate_email("usuario@empresaxyz.com")
         False
-        >>> validar_email("")
+        >>> validate_email("")
         False
     """
     if not isinstance(email, str) or not email:
         return False
 
-    padrao = r'^(?!\.)[a-zA-Z0-9._%+-]+(?<!\.)@(?!-)(?!\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$'
-    if not bool(re.match(padrao, email)):
+    pattern = r'^(?!\.)[a-zA-Z0-9._%+-]+(?<!\.)@(?!-)(?!\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$'
+    if not bool(re.match(pattern, email)):
         return False
 
-    dominio = email.split("@")[-1].lower()
-    return dominio in provedores_email
+    domain = email.split("@")[-1].lower()
+    return domain in allowed_email_providers
 
 
