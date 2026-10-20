@@ -1,15 +1,12 @@
 """Define e valida os dados necessários para cadastrar um usuário."""
 
-import sqlite3
-
-from app.core.security.password_hash import criar_hash
-from app.core.database import get_db
+from app.core.security.password_hash import hash_password
 from app.users.services import (
-    validar_DRT,
-    validar_email,
-    validar_name,
-    validar_senha,
-    validar_telefone,
+    validate_drt,
+    validate_email,
+    validate_name,
+    validate_password,
+    validate_phone_number,
 )
 
 
@@ -24,9 +21,7 @@ class UserValidationError(ValueError):
 class CreateUser:
     """Representa os dados validados para criar uma conta de usuário.
 
-    A classe aplica as validações existentes na mesma ordem do cadastro,
-    gera o hash da senha e mantém os dados prontos para persistência. Ela não
-    persiste os dados no banco por meio de ``commit``.
+    A classe valida os dados, gera o hash e insere usando a conexão fornecida.
 
     Attributes:
         drt: Identificação única do funcionário.
@@ -51,16 +46,16 @@ class CreateUser:
             UserValidationError: Se o corpo não for um objeto com todos os
                 campos necessários ou se algum campo for inválido.
         """
-        required_fields = ("DRT", "name", "Email", "numero_tel", "senha")
+        required_fields = ("drt", "name", "email", "numero_tel", "senha")
         if not isinstance(payload, dict) or any(
             field not in payload for field in required_fields
         ):
             raise UserValidationError("sem resultado, verifique os dados", 400)
 
         return cls.from_values(
-            drt=payload["DRT"],
+            drt=payload["drt"],
             name=payload["name"],
-            email=payload["Email"],
+            email=payload["email"],
             phone_number=payload["numero_tel"],
             password=payload["senha"],
         )
@@ -78,26 +73,25 @@ class CreateUser:
         if any(not isinstance(value, str) for value in values):
             raise UserValidationError("todos os campos devem ser textos", 400)
 
-        drt_valid, message = validar_DRT(drt)
-        if not drt_valid:
-            raise UserValidationError(message, 409)
+        drt_is_valid, message = validate_drt(drt)
+        if not drt_is_valid:
+            raise UserValidationError(message, 400)
 
-        if not validar_name(name):
+        if not validate_name(name):
             raise UserValidationError("verifique o nome", 400)
 
-        if not validar_email(email):
-            raise UserValidationError("email invalido", 400)
+        if not validate_email(email):
+            raise UserValidationError("email inválido", 400)
 
-        password_valid, message = validar_senha(password)
+        if not validate_phone_number(phone_number):
+            raise UserValidationError("verifique o número de telefone", 400)
+
+        password_valid, message = validate_password(password)
         if not password_valid:
             raise UserValidationError(message, 400)
 
-        password_hash = criar_hash(password)
-
-        if not validar_telefone(phone_number):
-            raise UserValidationError("verifique o numero de telefone", 400)
-
-        return cls(drt, name, email, phone_number, password_hash)
+        password_hash = hash_password(password)
+        return cls(drt, name, email.lower(), phone_number, password_hash)
 
     def to_database_values(self):
         """Retorna os campos na ordem esperada pelo INSERT da tabela ``users``."""
@@ -109,16 +103,10 @@ class CreateUser:
             self.password_hash,
         )
 
-    def commit(self):
-        """Insere este usuário no banco e informa se a operação funcionou."""
-        try:
-            with get_db() as conn:
-                conn.execute(
-                    """INSERT INTO users(drt, name, email, numero_telefone, senha)
-                       VALUES (?, ?, ?, ?, ?)""",
-                    self.to_database_values(),
-                )
-                conn.commit()
-            return True
-        except sqlite3.IntegrityError:
-            return False
+    def insert(self, conn):
+        """Insere este usuário na conexão recebida, sem gerenciar a transação."""
+        conn.execute(
+            """INSERT INTO users(drt, name, email, numero_telefone, senha)
+               VALUES (?, ?, ?, ?, ?)""",
+            self.to_database_values(),
+        )

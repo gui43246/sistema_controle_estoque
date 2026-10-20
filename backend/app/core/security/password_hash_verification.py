@@ -2,7 +2,7 @@
 
 import bcrypt
 
-def verifique_hash(senha_digitada=str,hash_armazenado=bytes)->bool:
+def verify_password(password: str, stored_hash: bytes) -> bool:
     
     """Retorna se a senha informada corresponde ao hash bcrypt fornecido."""
-    return bcrypt.checkpw(senha_digitada.encode("utf-8"),hash_armazenado)
+    return bcrypt.checkpw(password.encode("utf-8"),stored_hash)

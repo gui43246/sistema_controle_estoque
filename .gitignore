@@ -1,5 +1,11 @@
 
 .env
+.env.*
+!.env.example
+
+# Ambientes virtuais Python
+.venv/
+venv/
 
 # Logs
 *.log
@@ -9,12 +15,14 @@
 .idea/
 __pycache__/
 *.py[cod]
-.json
+.pytest_cache/
+.pytest-tmp/
+.vscode-test/
 *.db
 *.sqlite
 *.sqlite3
 *.db-*
 *.sqlite-*
-*settings.json
+/settings.json
 # Logs gerados pela aplicação e pelos testes
 logs/*.log

@@ -1,15 +1,15 @@
 """Exclui logicamente um produto, zera seu estoque e registra a movimentação."""
 
 from app.core.database import get_db
-from app.models.product import ProdutoNaoEncontradoError
-from app.models.movimentacao import Movimentacao
+from app.models.product import ProductNotFoundError
+from app.models.movement import StockMovement
 
 
-def excluir_produto(codigo_barras: str, motivo_id: int, usuario_drt: str) -> None:
+def delete_product(barcode: str, reason_id: int, user_drt: str) -> None:
     """Marca o produto como excluído e registra a movimentação na mesma transação.
 
     Raises:
-        ProdutoNaoEncontradoError: Se o produto não existe ou já foi excluído.
+        ProductNotFoundError: Se o produto não existe ou já foi excluído.
         ValueError: Se o motivo não existir.
         sqlite3.Error: Para qualquer falha do banco.
     """
@@ -18,19 +18,19 @@ def excluir_produto(codigo_barras: str, motivo_id: int, usuario_drt: str) -> Non
             """UPDATE Produtos_cadastrados
                SET status = 'excluido'
                WHERE codigo_barras = ? AND status = 'ativo'""",
-            (codigo_barras,),
+            (barcode,),
         )
         if cursor.rowcount == 0:
-            raise ProdutoNaoEncontradoError("produto nao encontrado")
+            raise ProductNotFoundError("produto não encontrado")
 
         conn.execute(
             "UPDATE estoque SET quantidade = 0 WHERE codigo_barras = ?",
-            (codigo_barras,),
+            (barcode,),
         )
-        Movimentacao.registrar(
+        StockMovement.record(
             conn,
-            codigo_barras=codigo_barras,
+            barcode=barcode,
             status="exclusão",
-            motivo=motivo_id,
-            usuario_drt=usuario_drt,
+            reason=reason_id,
+            user_drt=user_drt,
         )

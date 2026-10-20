@@ -1,0 +1,165 @@
+@baseUrl = http://127.0.0.1:5000
+
+### Faça login e execute esta requisição antes das rotas protegidas
+# @name login
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "drt": "900000000",
+  "senha_digitada": "Admteste123"
+}
+
+### Token obtido automaticamente da resposta do login
+@token = {{login.response.body.token}}
+
+### Listar usuários (esperado: 200)
+GET {{baseUrl}}/usuarios
+Authorization: Bearer {{token}}
+
+### Cadastrar usuário válido (esperado: 201)
+# DRT de teste. Altere se já estiver cadastrada; e-mail/telefone também precisam ser únicos.
+POST {{baseUrl}}/Cadastro_usuario
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "DRT": "908765432",
+  "name": "Teste Usuario",
+  "Email": "teste.usuario908765432@gmail.com",
+  "numero_tel": "11912345678",
+  "senha": "Teste123!"
+}
+
+### Cadastrar usuário sem token (esperado: 401)
+POST {{baseUrl}}/Cadastro_usuario
+Content-Type: application/json
+
+{
+  "DRT": "908765433",
+  "name": "Teste Usuario",
+  "Email": "teste.usuario908765433@gmail.com",
+  "numero_tel": "21987654321",
+  "senha": "Teste123!"
+}
+
+### Repetir o cadastro após o válido (esperado: 409 por DRT duplicada)
+POST {{baseUrl}}/Cadastro_usuario
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "DRT": "908765432",
+  "name": "Teste Usuario",
+  "Email": "outro.usuario908765432@gmail.com",
+  "numero_tel": "21987654321",
+  "senha": "Teste123!"
+}
+
+### Campo obrigatório ausente (esperado: 400)
+POST {{baseUrl}}/Cadastro_usuario
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "DRT": "908765438"
+}
+
+### DRT inválida (esperado: 409)
+POST {{baseUrl}}/Cadastro_usuario
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "DRT": "123",
+  "name": "Teste Usuario",
+  "Email": "drt.invalida@gmail.com",
+  "numero_tel": "21987654321",
+  "senha": "Teste123!"
+}
+
+### Nome inválido (esperado: 400)
+POST {{baseUrl}}/Cadastro_usuario
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "DRT": "908765434",
+  "name": "Teste123",
+  "Email": "nome.invalido@gmail.com",
+  "numero_tel": "21987654321",
+  "senha": "Teste123!"
+}
+
+### E-mail inválido (esperado: 400)
+POST {{baseUrl}}/Cadastro_usuario
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "DRT": "908765435",
+  "name": "Teste Usuario",
+  "Email": "teste@dominio-nao-permitido.test",
+  "numero_tel": "21987654321",
+  "senha": "Teste123!"
+}
+
+### Telefone inválido (esperado: 400)
+POST {{baseUrl}}/Cadastro_usuario
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "DRT": "908765436",
+  "name": "Teste Usuario",
+  "Email": "telefone.invalido@gmail.com",
+  "numero_tel": "123",
+  "senha": "Teste123!"
+}
+
+### Senha inválida (esperado: 400)
+POST {{baseUrl}}/Cadastro_usuario
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "DRT": "908765437",
+  "name": "Teste Usuario",
+  "Email": "senha.invalida@gmail.com",
+  "numero_tel": "21987654321",
+  "senha": "fraca"
+}
+
+### Redefinir senha do usuário de teste (esperado: 200; execute somente após o cadastro válido)
+POST {{baseUrl}}/reset_senha
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "DRT": "908765432",
+  "nova_senha": "NovaSenha123!",
+  "confirmar_senha": "NovaSenha123!"
+}
+
+### Redefinir senha com confirmação diferente (esperado: 400)
+POST {{baseUrl}}/reset_senha
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "DRT": "908765432",
+  "nova_senha": "NovaSenha123!",
+  "confirmar_senha": "OutraSenha123!"
+}
+
+### Excluir DRT inexistente (esperado: 404)
+DELETE {{baseUrl}}/usuarios/000000001
+Authorization: Bearer {{token}}
+
+### Tentar excluir o próprio administrador (esperado: 409)
+DELETE {{baseUrl}}/usuarios/900000000
+Authorization: Bearer {{token}}
+
+### Excluir o usuário de teste (esperado: 200; execute somente se o cadastro acima retornou 201)
+DELETE {{baseUrl}}/usuarios/908765432
+Authorization: Bearer {{token}}
