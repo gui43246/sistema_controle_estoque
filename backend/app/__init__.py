@@ -25,7 +25,14 @@ WEAK_SECRETS = {
     "troque-esta-chave-em-producao",
     "coloque-uma-chave-longa-e-aleatoria-aqui",
 }
-WEAK_SECRET_TERMS = ("coloque", "aqui", "change", "example", "secret", "senha")
+WEAK_SECRET_TERMS = (
+    "coloque-uma-chave",
+    "chave-longa-e-aleatoria-aqui",
+    "your-secret-key",
+    "change-me",
+    "example-key",
+    "senha-aqui",
+)
 
 
 def validate_production_secret(secret):
@@ -45,8 +52,17 @@ def validate_production_secret(secret):
 if ENV == "production":
     validate_production_secret(JWT_SECRET)
 
+try:
+    MAX_REQUEST_BODY_BYTES = int(os.getenv("MAX_CONTENT_LENGTH_BYTES", str(1024 * 1024)))
+except ValueError as error:
+    raise RuntimeError("MAX_CONTENT_LENGTH_BYTES deve ser um inteiro positivo") from error
+
+if MAX_REQUEST_BODY_BYTES < 1:
+    raise RuntimeError("MAX_CONTENT_LENGTH_BYTES deve ser um inteiro positivo")
+
 app = Flask(__name__)
 app.config["JWT_SECRET_KEY"] = JWT_SECRET
+app.config["MAX_CONTENT_LENGTH"] = MAX_REQUEST_BODY_BYTES
 # Define expiração explícita para poder testar token expirado
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(
     minutes=int(os.getenv("JWT_ACCESS_MINUTES", "60"))
@@ -58,12 +74,21 @@ app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=7)
 def handle_unexpected_exception(error):
     """Log unexpected failures and return a generic response to clients."""
     if isinstance(error, HTTPException):
-        return error
+        response = error.get_response()
+        response.set_data(app.json.dumps({"mensagem": error.name}))
+        response.content_type = "application/json"
+        return response
     app.logger.error(
         "erro inesperado não tratado",
         exc_info=(type(error), error, error.__traceback__),
     )
     return jsonify({"mensagem": "erro interno, tente novamente mais tarde"}), 500
+
+
+@app.errorhandler(413)
+def handle_request_too_large(error):
+    """Return a generic JSON response when a request exceeds the body limit."""
+    return jsonify({"mensagem": "corpo da requisição excede o limite permitido"}), 413
 
 jwt = JWTManager(app)
 

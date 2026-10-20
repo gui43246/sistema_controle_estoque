@@ -176,6 +176,31 @@ def test_registration_rejects_regular_user(auth_client):
     assert response.status_code == 403
 
 
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [
+        ("post", "/cadastrar"),
+        ("post", "/EditarQuantidade"),
+        ("post", "/EditarValor"),
+        ("post", "/ajuste_setor_produto"),
+        ("put", "/ExcluirProduto"),
+        ("post", "/Cadastro_usuario"),
+        ("get", "/usuarios"),
+        ("post", "/reset_senha"),
+        ("delete", "/usuarios/000000000"),
+    ],
+)
+def test_regular_user_gets_forbidden_on_every_admin_route(auth_client, method, path):
+    request = getattr(auth_client, method)
+    headers = {"Authorization": f"Bearer {token_for('123456789')}"}
+    if method in {"post", "put"}:
+        response = request(path, json={}, headers=headers)
+    else:
+        response = request(path, headers=headers)
+
+    assert response.status_code == 403
+
+
 def test_unexpected_login_error_is_generic_and_logged(auth_client, monkeypatch, caplog):
     import app.users.routes.authenticate_user as authenticate_user
 

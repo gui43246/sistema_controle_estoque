@@ -61,7 +61,7 @@ Esse comando cria as tabelas, os setores e os motivos. Também cria uma conta ad
 
 Essa conta é somente para desenvolvimento. Troque a senha ou remova a conta antes de disponibilizar a aplicação para outras pessoas.
 
-## Iniciar a API
+## Iniciar a API em desenvolvimento
 
 Na pasta raiz, com o ambiente virtual ativo e o arquivo `.env` configurado, execute:
 
@@ -69,7 +69,22 @@ Na pasta raiz, com o ambiente virtual ativo e o arquivo `.env` configurado, exec
 py backend\run.py
 ```
 
-A API ficará disponível em `http://127.0.0.1:5000`. O servidor está configurado com `debug=True`, portanto deve ser usado apenas durante o desenvolvimento local.
+A API ficará disponível em `http://127.0.0.1:5000`. O modo de depuração fica desligado por padrão. Para habilitá-lo explicitamente durante o desenvolvimento, defina `FLASK_DEBUG=1` antes de iniciar.
+
+## Executar em produção
+
+Instale as dependências de `backend/requirements.txt`, configure `JWT_SECRET_KEY` com uma chave aleatória forte e inicie o servidor WSGI Waitress a partir da pasta raiz:
+
+```powershell
+$env:PYTHONPATH = "$PWD\backend"
+$env:FLASK_ENV = "production"
+$env:FLASK_DEBUG = "0"
+waitress-serve --listen=0.0.0.0:5000 app:app
+```
+
+O Waitress atende a aplicação WSGI sem ativar o servidor de desenvolvimento do Flask. Debug ativo em produção é recusado.
+
+O limitador de requisições usa `memory://` por padrão. Esse armazenamento mantém os contadores apenas no processo atual; processos ou instâncias diferentes têm contadores independentes. Para compartilhar limites entre instâncias, configure `RATELIMIT_STORAGE_URI` com um armazenamento externo compatível, como Redis.
 
 ## Autenticação e permissões
 
@@ -111,9 +126,36 @@ Todas as rotas ficam na raiz do endereço, sem prefixo `/api`. As requisições 
 | `DELETE` | `/usuarios/<drt>` | Administrador | Exclui usuário sem movimentações e impede autoexclusão. |
 
 As listagens `GET /estoque`, `GET /movimentacoes` e `GET /usuarios` aceitam os
-parâmetros `page` (padrão `1`) e `per_page` (padrão `50`, máximo `200`). As
-respostas têm o formato `{"items": [...], "page": 1, "per_page": 50, "total": 0}`.
+parâmetros `page` (padrão `1`) e `per_page` (padrão `50`, máximo `200`). A
+resposta contém os registros da página em `items`, a página atual em `page`, o
+tamanho solicitado em `per_page` e a quantidade total de registros em `total`.
 Uma página inválida retorna HTTP 400.
+
+Exemplo de resposta de `GET /estoque?page=1&per_page=2`:
+
+```json
+{
+  "items": [
+    {
+      "codigo_barras": "789000000001",
+      "nome_produto": "Produto exemplo",
+      "valor_prod": 12.5,
+      "setor_id": 1,
+      "quantidade": 8
+    },
+    {
+      "codigo_barras": "789000000002",
+      "nome_produto": "Outro produto",
+      "valor_prod": 7.9,
+      "setor_id": 2,
+      "quantidade": 3
+    }
+  ],
+  "page": 1,
+  "per_page": 2,
+  "total": 18
+}
+```
 
 ### Exemplos de requisição
 
