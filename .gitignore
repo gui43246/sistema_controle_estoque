@@ -17,12 +17,12 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .pytest-tmp/
-.json
+.vscode-test/
 *.db
 *.sqlite
 *.sqlite3
 *.db-*
 *.sqlite-*
-*settings.json
+/settings.json
 # Logs gerados pela aplicação e pelos testes
 logs/*.log
